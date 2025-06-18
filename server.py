@@ -12,7 +12,7 @@ def route(path: str, method: str):
     return decorator
 
 class RequestHandler(BaseHTTPRequestHandler):
-    protocol_version = "HTTP/1.1"
+    protocol_version = "HTTP/1.0"
 
     def _set_headers(self, status=200, content_type="application/json"):
         self.send_response(status)
@@ -44,14 +44,16 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"error": str(e)}).encode())
 
 @route("/server_on", method="GET")
-def echo(body: str):
+def server_on(body: str):
     return {"server_on": True}
+
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 
 def run(host: str = "localhost", port: int = 8000):
     server = ThreadedHTTPServer((host, port), RequestHandler)
     print(f"Server started on http://{host}:{port}  (Ctrl-C to stop)")
+    # TODO: change to https
     try:
         server.serve_forever()
     except KeyboardInterrupt:
