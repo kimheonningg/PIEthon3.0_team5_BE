@@ -29,7 +29,7 @@ brew services start mongodb-community
 mongosh "url"
 ```
 
-To check MongoDB server is running well:
+How to check if your MongoDB server is running well:
 
 ```bash
 db.runCommand({ ping: 1 })
