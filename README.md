@@ -11,3 +11,8 @@ pip install -r requirements.txt
 ```bash
 python server.py
 ```
+
+## Tools used (Tech stack)
+
+Postman (API testing)
+MongoDB (database)
