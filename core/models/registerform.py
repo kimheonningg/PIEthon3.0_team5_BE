@@ -1,4 +1,4 @@
-from typing import Literal, list
+from typing import Literal, List
 from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, EmailStr, constr
@@ -24,4 +24,4 @@ class RegisterForm(BaseModel):
     password: str # TODO: hashed
     position: Position
     createdAt: datetime
-    notes: list[Note] = []
+    notes: List[Note] = []
