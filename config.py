@@ -8,7 +8,7 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 
 class Settings(BaseSettings):
     mongodb_uri: str = Field(..., env="MONGODB_URI")
-    user_db_name: str = "users"
+    admin_db_name: str = "admin"
 
     class Config:
         env_prefix = ""

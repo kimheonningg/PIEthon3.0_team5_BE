@@ -23,5 +23,5 @@ class RegisterForm(BaseModel):
     userId: constr(pattern=r"^[a-zA-Z0-9_]{4,20}$")
     password: str # TODO: hashed
     position: Position
-    createdAt: datetime
-    notes: List[Note] = []
+    # createdAt: datetime
+    # notes: List[Note] = []
