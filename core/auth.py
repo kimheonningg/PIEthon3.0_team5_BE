@@ -22,5 +22,5 @@ async def register_user(payload: RegisterForm) -> str:
     except DuplicateKeyError:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Email or User Id already registered",
+            detail="User already registered",
         )
