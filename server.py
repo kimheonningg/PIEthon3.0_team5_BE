@@ -1,8 +1,16 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, status
 from core.models.registerform import RegisterForm
 from core.auth import register_user
+from core.db import ensure_indexes, init_db
 
 app = FastAPI(title="PIEthon3.0", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    await ensure_indexes()
+    yield
 
 @app.get("/server_on")
 async def server_on():
