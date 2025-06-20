@@ -3,14 +3,19 @@ from fastapi import FastAPI, status
 from core.models.registerform import RegisterForm
 from core.auth import register_user
 from core.db import ensure_indexes, init_db
-
-app = FastAPI(title="PIEthon3.0", version="1.0.0")
+import uvicorn
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
     await ensure_indexes()
     yield
+
+app = FastAPI(
+    title="PIEthon3.0", 
+    version="1.0.0",
+    lifespan=lifespan
+)
 
 @app.get("/server_on")
 async def server_on():
@@ -22,5 +27,4 @@ async def register(user_info: RegisterForm):
     return {"_id": new_id, "message": "registered"}
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run("server:app", host="localhost", port=8000, reload=True)
