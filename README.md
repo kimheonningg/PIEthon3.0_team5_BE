@@ -13,6 +13,7 @@ python server.py
 ```
 
 3. Make sure to add `.env` at `PIEthon3.0_team5_BE/`
+   Check `.env_example` for `.env` file formats
 
 ## Tools used (Tech stack)
 
