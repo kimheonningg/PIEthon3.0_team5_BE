@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
+from fastapi.security import OAuth2PasswordBearer
 from pymongo.errors import DuplicateKeyError
 from typing import Any, Dict
-from jose import jwt 
+from jose import jwt, JWTError
+from bson import ObjectId
 
 from config import get_settings
 from core.models.registerform import RegisterForm
@@ -14,6 +16,8 @@ settings = get_settings()
 SECRET_KEY: str = settings.secret_key
 ALGORITHM: str = "HS256"
 ACCESS_TOKEN_EXPIRE_TIME = 30 # expires in 30 mins
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -85,3 +89,21 @@ async def register_user(payload: RegisterForm) -> str:
 
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail)
 
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any]:
+    credentials_error = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: Optional[str] = payload.get("sub")
+        if user_id is None:
+            raise credentials_error
+    except JWTError:
+        raise credentials_error
+
+    user = await admin_db.users.find_one({"_id": ObjectId(user_id)})
+    if user is None:
+        raise credentials_error
+    return user
