@@ -63,7 +63,7 @@ async def register_user(payload: RegisterForm) -> str:
     user_doc = payload.model_dump()
     user_doc["password"] = hash_password(user_doc["password"])
     user_doc["createdAt"] = datetime.utcnow()
-    user_doc.setdefault("notes", [])
+    user_doc.setdefault("medicalNotes", [])
 
     try:
         result = await admin_db.users.insert_one(user_doc)
