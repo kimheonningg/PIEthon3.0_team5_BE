@@ -12,11 +12,13 @@ pip install -r requirements.txt
 python server.py
 ```
 
+3. Make sure to add `.env` at `PIEthon3.0_team5_BE/`
+
 ## Tools used (Tech stack)
 
 - Postman (API testing)
 
-- MongoDB (database)
+- MongoDB (database), use MongoDB Compass for better usability
 
 #### How to install MongoDB in MacOS with Apple silicon
 
