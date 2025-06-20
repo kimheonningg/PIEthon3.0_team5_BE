@@ -3,7 +3,7 @@ from pydantic import BaseModel, ConfigDict
 from typing import Literal
 from bson import ObjectId
 
-MedicalNoteType = Literal["consult", "radiology", "surgery"] # TODO
+MedicalNoteType = Literal["consult", "radiology", "surgery", "other"] # TODO
 
 class MedicalNote(BaseModel):
     doctorId: str
