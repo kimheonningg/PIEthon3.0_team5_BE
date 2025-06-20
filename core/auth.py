@@ -1,14 +1,63 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from fastapi import HTTPException, status
 from pymongo.errors import DuplicateKeyError
+from typing import Any, Dict
+from jose import jwt 
+
+from config import get_settings
 from core.models.registerform import RegisterForm
+from core.models.loginform import LoginForm
 from core.db import admin_db
+
+settings = get_settings()
+SECRET_KEY: str = settings.secret_key
+ALGORITHM: str = "HS256"
+ACCESS_TOKEN_EXPIRE_TIME = 30 # expires in 30 mins
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(raw: str) -> str:
     return pwd_context.hash(raw)
+
+def _create_access_token(
+    data: Dict[str, Any],
+    expires_delta: int = ACCESS_TOKEN_EXPIRE_TIME,
+) -> str:
+    # JWT access token
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=expires_delta)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+async def authenticate_user(payload: LoginForm):
+    or_filters = []
+    if payload.userId:
+        or_filters.append({"userId": payload.userId})
+    if payload.phoneNum:
+        or_filters.append({"phoneNum": payload.phoneNum})
+
+    if not or_filters:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Either userId or phoneNum must be provided."
+        )
+    
+    user = await admin_db.users.find_one({"$or": or_filters})
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="User Id or phone number does not exist or invalid password entered."
+        )
+    
+    if not pwd_context.verify(payload.password, user["password"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User Id or phone number does not exist or invalid password entered."
+        )
+    
+    return user
 
 async def register_user(payload: RegisterForm) -> str:
     user_doc = payload.model_dump()
