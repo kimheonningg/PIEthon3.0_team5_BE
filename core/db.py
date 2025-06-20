@@ -12,11 +12,23 @@ async def init_db() -> None:
 
 async def ensure_indexes() -> None:
     await admin_db.users.create_index(
-        [
-            ("name.firstName", ASCENDING),
-            ("name.lastName",  ASCENDING),
-            ("phoneNum",       ASCENDING),
+        [   
+            ("userId", 1),
+            ("name.firstName", 1),
+            ("name.lastName", 1),
+            ("phoneNum", 1),
+            ("email", 1),
         ],
         unique=True,
-        name="unique_name_phone",
+        name="unique_id_name_phone_email",
+    )
+
+    await admin_db.users.create_index(
+        [("userId", 1)],
+        unique=True,
+        name="unique_userId",
+    )
+
+    await admin_db.users.create_index(
+        "email", unique=True, name="unique_email"
     )

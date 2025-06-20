@@ -19,8 +19,20 @@ async def register_user(payload: RegisterForm) -> str:
     try:
         result = await admin_db.users.insert_one(user_doc)
         return str(result.inserted_id)
-    except DuplicateKeyError:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="User already registered",
-        )
+    except DuplicateKeyError as e:
+        detail = "Duplicate key: "
+        kp = (e.details or {}).get("keyPattern")
+        if kp:
+            if "userId" in kp:
+                detail = "This ID already exists."
+            elif "email" in kp:
+                detail = "This email is already registered."
+            elif "phoneNum" in kp:
+                detail = "This phone number is already registered."
+            else:
+                detail = "User already registered"
+        else:
+            detail = "User already registered"
+
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail)
+
