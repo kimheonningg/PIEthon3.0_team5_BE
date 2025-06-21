@@ -1,4 +1,4 @@
-from typing import Literal, List
+from typing import Literal, List, Optional
 from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, EmailStr, constr
@@ -18,3 +18,4 @@ class RegisterForm(BaseModel):
     userId: constr(pattern=r"^[a-zA-Z0-9_]{4,20}$")
     password: str
     position: Position
+    patientId: Optional[str] = None

@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, status, Depends
+from fastapi import FastAPI, status, Depends, HTTPException
 import uvicorn
 
 from core.models.registerform import RegisterForm
@@ -12,6 +12,7 @@ from core.auth import (
     get_current_user,
 )
 from core.db import ensure_indexes, init_db
+from core.patientmanage import assign_patient_to_doctor
 
 
 @asynccontextmanager
@@ -41,7 +42,7 @@ async def login(credentials: LoginForm):
     access_token = _create_access_token({"sub": str(user["_id"])})
     return {"access_token": access_token, "token_type": "Bearer"}
 
-@app.post("/patients/{patient_id}/notes")
+@app.post("/patients/notes/{patient_id}")
 async def create_note(
     patient_id: str,
     note_in: CreateNoteForm,
@@ -49,6 +50,15 @@ async def create_note(
 ):
     if current_user["position"] != "doctor":
         raise HTTPException(403, "Only doctors can create medical notes.")
+
+@app.post("/patients/add/{patientId}")
+async def assign_patient(
+    patientId: str,
+    currentUser: dict = Depends(get_current_user),
+):
+    result = await assign_patient_to_doctor(patientId, currentUser)
+    return result
+
 
 if __name__ == "__main__":
     uvicorn.run("server:app", host="localhost", port=8000, reload=True)
