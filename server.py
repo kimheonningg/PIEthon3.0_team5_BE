@@ -12,7 +12,7 @@ from core.auth import (
     get_current_user,
 )
 from core.db import ensure_indexes, init_db
-from core.patientmanage import assign_patient_to_doctor
+from core.notes import add_new_note
 
 
 @asynccontextmanager
@@ -48,8 +48,8 @@ async def create_note(
     note_in: CreateNoteForm,
     current_user: dict = Depends(get_current_user),
 ):
-    if current_user["position"] != "doctor":
-        raise HTTPException(403, "Only doctors can create medical notes.")
+    result = await add_new_note(patient_id, note_in, current_user)
+    return result
 
 @app.post("/patients/add/{patientId}")
 async def assign_patient(
