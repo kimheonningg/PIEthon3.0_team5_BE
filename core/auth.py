@@ -3,13 +3,14 @@ from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 from pymongo.errors import DuplicateKeyError
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from jose import jwt, JWTError
 from bson import ObjectId
 
 from config import get_settings
 from core.models.registerform import RegisterForm
 from core.models.loginform import LoginForm
+from core.models.findidform import FindIdForm
 from core.db import admin_db
 
 settings = get_settings()
@@ -111,3 +112,20 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any
     if user is None:
         raise credentials_error
     return user
+
+async def find_user_id(payload: FindIdForm):
+    user: Optional[Dict[str, Any]] = await admin_db.users.find_one(
+        {
+            "name.firstName": payload.name.firstName,
+            "name.lastName": payload.name.lastName,
+            "phoneNum": payload.phoneNum,
+        },
+        projection={"userId": 1},
+    )
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No user found",
+        )
+
+    return {"success": True, "userId": user["userId"]}

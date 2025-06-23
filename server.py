@@ -5,11 +5,13 @@ import uvicorn
 from core.models.registerform import RegisterForm
 from core.models.loginform import LoginForm, Token
 from core.models.createnoteform import CreateNoteForm
+from core.models.findidform import FindIdForm
 from core.auth import (
     register_user, 
     authenticate_user,
     _create_access_token,
     get_current_user,
+    find_user_id
 )
 from core.db import ensure_indexes, init_db
 from core.notes import add_new_note
@@ -41,6 +43,11 @@ async def login(credentials: LoginForm):
     user = await authenticate_user(credentials)
     access_token = _create_access_token({"sub": str(user["_id"])})
     return {"access_token": access_token, "token_type": "Bearer"}
+
+@app.get("/find_id")
+async def find_id(user_info: FindIdForm):
+    userId = await find_user_id(user_info)
+    return userId
 
 @app.post("/patients/notes/{patient_id}")
 async def create_note(
