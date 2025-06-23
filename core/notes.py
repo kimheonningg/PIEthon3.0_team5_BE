@@ -4,7 +4,7 @@ from typing import Dict
 from bson import ObjectId
 from fastapi import HTTPException, status
 
-from core.models.createnoteform import CreateNoteForm
+from core.models.noteform import CreateNoteForm, UpdateNoteForm
 from core.db import admin_db
 
 async def add_new_note(
@@ -23,7 +23,9 @@ async def add_new_note(
         raise HTTPException(status_code=404, detail="Patient not found")
 
     now = datetime.utcnow()
+    noteOid = str(ObjectId())
     noteDoc = {
+        "_id": noteOid,
         "doctorId": str(doctorInfo["_id"]),
         "patientId": patientId,
         "createdAt": now,
@@ -46,3 +48,59 @@ async def add_new_note(
         raise HTTPException(status_code=500, detail="Failed to append medical note")
 
     return {"success": True, "note": noteDoc}
+
+async def update_existing_note(
+    noteId: str,
+    noteIn: UpdateNoteForm,
+    doctorInfo: Dict,
+) -> Dict:
+    if doctorInfo["position"] != "doctor":
+        raise HTTPException(403, "Only doctors can create medical notes.")
+    
+    patient = await admin_db.users.find_one(
+        {"patientId": noteIn.patientId, "position": "patient"},
+        projection={"_id": 1},
+    )
+
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    set_ops: Dict[str, Any] = {}
+    if noteIn.title is not None:
+        set_ops["medicalNotes.$[note].title"] = noteIn.title
+    if noteIn.content is not None:
+        set_ops["medicalNotes.$[note].content"] = noteIn.content
+    if noteIn.noteType is not None:
+        set_ops["medicalNotes.$[note].noteType"] = noteIn.noteType
+    set_ops["medicalNotes.$[note].lastModified"] = datetime.utcnow()
+
+    if len(set_ops) == 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Nothing to update.",
+        )
+        
+    try:
+        note_id_filter = ObjectId(noteId)
+    except bson_errors.InvalidId:
+        note_id_filter = noteId
+    
+    result = await admin_db.users.update_one(
+        {"_id": patient["_id"]},
+        {"$set": set_ops},
+        array_filters=[
+            {                                
+                "note._id": ObjectId(noteId),
+                "note.deleted": False,
+                "note.doctorId": str(doctorInfo["_id"]),
+            }
+        ],
+    )
+
+    if result.modified_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Note not found or you are not the author.",
+        )
+
+    return {"success": True}

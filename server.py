@@ -4,7 +4,7 @@ import uvicorn
 
 from core.models.registerform import RegisterForm
 from core.models.loginform import LoginForm, Token
-from core.models.createnoteform import CreateNoteForm
+from core.models.noteform import CreateNoteForm, UpdateNoteForm
 from core.models.findidform import FindIdForm
 from core.models.changepwform import ChangePwForm
 from core.auth import (
@@ -16,7 +16,10 @@ from core.auth import (
     change_password
 )
 from core.db import ensure_indexes, init_db
-from core.notes import add_new_note
+from core.notes import (
+    add_new_note,
+    update_existing_note
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -55,13 +58,22 @@ async def change_pw(user_info: ChangePwForm):
     success = await change_password(user_info)
     return success
 
-@app.post("/patients/notes/{patient_id}")
+@app.post("/patients/notes/create/{patient_id}")
 async def create_note(
     patient_id: str,
     note_in: CreateNoteForm,
     current_user: dict = Depends(get_current_user),
 ):
     result = await add_new_note(patient_id, note_in, current_user)
+    return result
+    
+@app.post("/patients/notes/update/{note_id}")
+async def update_note(
+    note_id: str,
+    note_in: UpdateNoteForm,
+    current_user: dict = Depends(get_current_user),
+):
+    result = await update_existing_note(note_id, note_in, current_user)
     return result
 
 @app.post("/patients/add/{patientId}")
