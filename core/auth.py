@@ -11,6 +11,7 @@ from config import get_settings
 from core.models.registerform import RegisterForm
 from core.models.loginform import LoginForm
 from core.models.findidform import FindIdForm
+from core.models.changepwform import ChangePwForm
 from core.db import admin_db
 
 settings = get_settings()
@@ -129,3 +130,45 @@ async def find_user_id(payload: FindIdForm):
         )
 
     return {"success": True, "userId": user["userId"]}
+
+async def change_password(payload: ChangePwForm):
+    if not payload.userId:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="UserId is required.",
+        )
+    
+    user: Optional[Dict[str, Any]] = await admin_db.users.find_one(
+        {"userId": payload.userId}
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    if not pwd_context.verify(payload.originalPw, user["password"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current password is incorrect.",
+        )
+
+    if pwd_context.verify(payload.newPw, user["password"]):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="New password must be different from the current password.",
+        )
+    
+    new_hashed_pw = hash_password(payload.newPw)
+
+    await admin_db.users.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {
+                "password": new_hashed_pw,
+            }
+        },
+    )
+
+    return {"success": True}
