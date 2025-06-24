@@ -19,3 +19,11 @@ class UpdateNoteForm(BaseModel):
         arbitrary_types_allowed=True,
         json_encoders={ObjectId: str}, 
     )
+
+class NoteForm(BaseModel):
+    patientId: str
+    doctorLicenceNum: str
+    title: str
+    content: str
+    noteType: MedicalNoteType
+
