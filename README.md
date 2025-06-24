@@ -40,3 +40,8 @@ db.runCommand({ ping: 1 })
 ```
 
 Connect using MongoDB Compass
+
+## Notes
+
+`patientId`: 환자 고유 식별 번호/아이디
+`licenceNum`: 의사 면허 번호

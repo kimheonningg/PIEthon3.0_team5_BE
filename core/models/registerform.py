@@ -15,7 +15,7 @@ class RegisterForm(BaseModel):
     email: EmailStr
     phoneNum: constr(strip_whitespace=True, min_length=9, max_length=11)
     name: Name
-    userId: constr(pattern=r"^[a-zA-Z0-9_]{4,20}$")
+    userId: constr(pattern=r"^[a-zA-Z0-9_]{1,20}$")
     password: str
     position: Position
     patientId: Optional[str] = None
