@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, status, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from core.models.registerform import RegisterForm
@@ -31,6 +32,14 @@ app = FastAPI(
     title="PIEthon3.0", 
     version="1.0.0",
     lifespan=lifespan
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/server_on")
