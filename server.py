@@ -57,12 +57,12 @@ async def login(credentials: LoginForm):
     access_token = _create_access_token({"sub": str(user["_id"])})
     return {"access_token": access_token, "token_type": "Bearer"}
 
-@app.get("/find_id")
+@app.post("/find_id")
 async def find_id(user_info: FindIdForm):
     userId = await find_user_id(user_info)
     return userId
 
-@app.get("/change_pw")
+@app.post("/change_pw")
 async def change_pw(user_info: ChangePwForm):
     success = await change_password(user_info)
     return success
