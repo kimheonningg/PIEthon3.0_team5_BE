@@ -17,5 +17,6 @@ class RegisterForm(BaseModel):
     name: Name
     userId: constr(pattern=r"^[a-zA-Z0-9_]{1,20}$")
     password: str
-    position: Position
-    patientId: Optional[str] = None
+    position: Position = "doctor"
+    licenceNum: str
+    # patientId: Optional[str] = None # 일단 의사만 사용
