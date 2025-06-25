@@ -26,7 +26,9 @@ from core.manage_funcs.notesmanage import (
 )
 from core.manage_funcs.patientmanage import (
     create_new_patient,
-    assign_patient_to_doctor
+    assign_patient_to_doctor,
+    get_all_assigned_patients,
+    get_specific_patient
 )
 
 @asynccontextmanager
@@ -73,6 +75,19 @@ async def find_id(user_info: FindIdForm):
 async def change_pw(user_info: ChangePwForm):
     success = await change_password(user_info)
     return success
+
+@app.get("/patients") # get all patients assigned to the current doctor
+async def get_patients(current_user: dict = Depends(get_current_user)):
+    result = await get_all_assigned_patients(current_user)
+    return result
+
+@app.get("/patient/{patient_id}") # get specific patient with patient id
+async def get_patient(
+    patient_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    result = await get_specific_patient(patient_id, current_user)
+    return result
 
 @app.post("/patients/create")
 async def create_patient(patient_info: Patient):
