@@ -99,7 +99,7 @@ async def update_note(
     result = await update_existing_note(note_id, note_in, current_user)
     return result
 
-@app.post("/patients/add/{patientId}")
+@app.post("/patients/assign/{patientId}")
 async def assign_patient(
     patientId: str,
     currentUser: dict = Depends(get_current_user),
