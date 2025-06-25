@@ -1,6 +1,6 @@
 # for doctors
 from typing import Dict, Any, Optional
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from datetime import datetime
 
 from core.db import admin_db
@@ -35,6 +35,19 @@ async def assign_patient_to_doctor(patientId: str, doctorInfo: Dict[str, Any]):
     patientDoc = await _get_patient(patientId)
     if not patientDoc:
         raise HTTPException(status_code=404, detail="환자 정보가 없습니다. 환자 정보를 등록해주세요.")
+
+    already_assigned = await admin_db.users.find_one(
+        {
+            "_id": doctorInfo["_id"],
+            "patientList.patientId": patientId,
+        },
+        {"_id": 1},
+    )
+    if already_assigned:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="이미 이 의사에게 배정된 환자입니다.",
+        )
 
     patientInfo : Patient = {
         "patientId": patientDoc["patientId"],
