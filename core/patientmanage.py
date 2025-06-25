@@ -23,6 +23,8 @@ async def create_new_patient(patientInfo: Patient):
     try:
         doc = patientInfo.model_dump(by_alias=True) 
         doc["createdAt"] = datetime.utcnow()
+        if doc.get("medicalNotes") is None:
+            doc["medicalNotes"] = []
         result = await admin_db.patients.insert_one(doc)
         return {"success": True}
     except:
