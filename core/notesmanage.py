@@ -55,15 +55,15 @@ async def update_existing_note(
     doctorInfo: Dict,
 ) -> Dict:
     if doctorInfo["position"] != "doctor":
-        raise HTTPException(403, "Only doctors can create medical notes.")
+        raise HTTPException(403, "의사만 수정할 수 있습니다.")
     
-    patient = await admin_db.users.find_one(
-        {"patientId": noteIn.patientId, "position": "patient"},
+    patient = await admin_db.patients.find_one(
+        {"patientId": noteIn.patientId},
         projection={"_id": 1},
     )
 
     if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
+        raise HTTPException(status_code=404, detail="환자 정보가 존재하지 않습니다.")
 
     set_ops: Dict[str, Any] = {}
     if noteIn.title is not None:
@@ -77,22 +77,19 @@ async def update_existing_note(
     if len(set_ops) == 1:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Nothing to update.",
+            detail="수정할 내용이 없습니다.",
         )
         
-    try:
-        note_id_filter = ObjectId(noteId)
-    except bson_errors.InvalidId:
-        note_id_filter = noteId
+    note_id_filter = str(noteId)
     
-    result = await admin_db.users.update_one(
-        {"_id": patient["_id"]},
+    result = await admin_db.patients.update_one(
+        {"patientId": noteIn.patientId},
         {"$set": set_ops},
         array_filters=[
-            {                                
-                "note._id": ObjectId(noteId),
-                "note.deleted": False,
+            {
+                "note._id": note_id_filter,
                 "note.doctorId": str(doctorInfo["_id"]),
+                "note.deleted": False,
             }
         ],
     )
