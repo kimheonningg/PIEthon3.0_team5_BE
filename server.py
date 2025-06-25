@@ -113,13 +113,13 @@ async def get_notes(
     result = await get_all_notes(patient_id, current_user)
     return result
 
-# @app.get("patients/note/{note_id}") # get specific note with note_id
-# async def get_note(
-#     note_id:str,
-#     current_user: dict = Depends(get_current_user),
-# ):
-#     result = await get_specific_note(note_id, current_user)
-#     return result
+@app.get("/patients/note/{note_id}") # get specific note with note_id
+async def get_note(
+    note_id:str,
+    current_user: dict = Depends(get_current_user),
+):
+    result = await get_specific_note(note_id, current_user)
+    return result
 
 if __name__ == "__main__":
     uvicorn.run("server:app", host="localhost", port=8000, reload=True)
