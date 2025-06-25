@@ -71,12 +71,12 @@ async def change_pw(user_info: ChangePwForm):
     success = await change_password(user_info)
     return success
 
-@app.post("/doctors/add")
+@app.post("/doctors/create")
 async def create_doctor(doctor_info: Doctor):
     success = await create_new_doctor(doctor_info)
     return success
 
-@app.post("/patients/add")
+@app.post("/patients/create")
 async def create_patient(patient_info: Patient):
     success = await create_new_patient(patient_info)
     return success
@@ -106,7 +106,6 @@ async def assign_patient(
 ):
     result = await assign_patient_to_doctor(patientId, currentUser)
     return result
-
 
 if __name__ == "__main__":
     uvicorn.run("server:app", host="localhost", port=8000, reload=True)
