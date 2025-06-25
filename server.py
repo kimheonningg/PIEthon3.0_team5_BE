@@ -9,7 +9,6 @@ from core.models.noteform import CreateNoteForm, UpdateNoteForm
 from core.models.findidform import FindIdForm
 from core.models.changepwform import ChangePwForm
 from core.models.patient import Patient
-# from core.models.doctor import Doctor
 from core.auth import (
     register_user, 
     authenticate_user,
@@ -19,12 +18,11 @@ from core.auth import (
     change_password
 )
 from core.db import ensure_indexes, init_db
-from core.notes import (
+from core.notesmanage import (
     add_new_note,
     update_existing_note
 )
 from core.patientmanage import create_new_patient
-# from core.doctormanage import create_new_doctor
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -70,11 +68,6 @@ async def find_id(user_info: FindIdForm):
 async def change_pw(user_info: ChangePwForm):
     success = await change_password(user_info)
     return success
-
-# @app.post("/doctors/create")
-# async def create_doctor(doctor_info: Doctor):
-#     success = await create_new_doctor(doctor_info)
-#     return success
 
 @app.post("/patients/create")
 async def create_patient(patient_info: Patient):

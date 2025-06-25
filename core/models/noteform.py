@@ -1,8 +1,11 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
-from bson import ObjectId
+# medical notes
 
-from core.models.medicalnote import MedicalNoteType
+from pydantic import BaseModel, ConfigDict
+from typing import Optional, Literal
+from bson import ObjectId
+from datetime import datetime
+
+MedicalNoteType = Literal["consult", "radiology", "surgery", "other"] # TODO
 
 class CreateNoteForm(BaseModel):
     title: str
@@ -23,7 +26,10 @@ class UpdateNoteForm(BaseModel):
 class NoteForm(BaseModel):
     patientId: str
     doctorLicenceNum: str
+    createdAt: datetime
+    lastModified: datetime
     title: str
     content: str
     noteType: MedicalNoteType
+    deleted: bool
 
