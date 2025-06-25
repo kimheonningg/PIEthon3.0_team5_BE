@@ -4,18 +4,18 @@ from fastapi import HTTPException
 from datetime import datetime
 
 from core.db import admin_db
-from core.models.patientinfo import PatientInfo
 from core.models.patient import Patient
 
-async def _get_patient(patient_id: str) -> Optional[Dict[str, Any]]:
+async def _get_patient(patientId: str) -> Optional[Dict[str, Any]]:
     projection = {
         "patientId": 1,
         "name": 1,
         "phoneNum": 1,
+        "doctorLicenceNum"
         "medicalNotes": 1,
     }
-    return await admin_db.users.find_one(
-        {"patientId": patient_id, "position": "patient"}, projection
+    return await admin_db.patients.find_one(
+        {"patientId": patientId}, projection
     )
 
 async def create_new_patient(patientInfo: Patient):
@@ -33,14 +33,14 @@ async def assign_patient_to_doctor(patientId: str, doctorInfo: Dict[str, Any]):
 
     patientDoc = await _get_patient(patientId)
     if not patientDoc:
-        raise HTTPException(status_code=404, detail="Patient not found")
+        raise HTTPException(status_code=404, detail="환자 정보가 없습니다. 환자 정보를 등록해주세요.")
 
-    patientInfo : PatientInfo = {
+    patientInfo : Patient = {
         "patientId": patientDoc["patientId"],
-        "patientOid": patientDoc["_id"],
         "name": patientDoc.get("name", {}),
         "phoneNum": patientDoc.get("phoneNum", ""),
         "medicalNotes": patientDoc.get("medicalNotes", []),
+        "doctorLicenceNum": patientDoc.get("doctorLicenceNum", [])
     }
     
     result = await admin_db.users.update_one(
