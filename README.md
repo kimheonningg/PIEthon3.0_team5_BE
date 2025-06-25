@@ -49,6 +49,7 @@ Connect using MongoDB Compass
 
 - 가입자는 의사만 있다고 가정 후 설계함
 - 따라서 의사는 회원가입을 통해 만들어지고, 환자는 `patients/create` 호출을 통해 만들어짐
+- 환자는 `patientId`(고유한 환자 번호)로 구분하고, 의사 / 진료노트는 `Object Id`로 구분함
 
 ### DB structure
 

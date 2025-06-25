@@ -5,6 +5,7 @@ from datetime import datetime
 
 from core.db import admin_db
 from core.models.patient import Patient
+from core.utils import to_serializable
 
 async def _get_patient(patientId: str) -> Optional[Dict[str, Any]]:
     projection = {
@@ -74,3 +75,54 @@ async def assign_patient_to_doctor(patientId: str, doctorInfo: Dict[str, Any]):
 
     success = result.modified_count == 1
     return {"success": success}
+
+async def get_all_assigned_patients(doctorInfo: Dict[str, Any]):
+    if doctorInfo.get("position") != "doctor":
+        raise HTTPException(403, "의사만 환자 목록을 조회할 수 있습니다.")
+
+    doctorOid = str(doctorInfo["_id"])
+    projection = {
+        "patientId": 1,
+        "name": 1,
+        "phoneNum": 1,
+        "medicalNotes": 1,
+        "doctorId": 1,
+        "createdAt": 1,
+    }
+    cursor = admin_db.patients.find(
+        {"doctorId": doctorOid}, projection
+    ).sort("createdAt", -1)
+
+    patients_raw = await cursor.to_list(length=None)
+    patients = [to_serializable(p) for p in patients_raw]
+
+    return {"success": True, "patients": patients}
+
+async def get_specific_patient(patientId: str, doctorInfo: Dict[str, Any]):
+    if doctorInfo.get("position") != "doctor":
+        raise HTTPException(403, "의사만 환자 목록을 조회할 수 있습니다.")
+    
+    doctorOid = str(doctorInfo["_id"])
+
+    projection = {
+        "patientId": 1,
+        "name": 1,
+        "phoneNum": 1,
+        "medicalNotes": 1,
+        "doctorId": 1,
+        "createdAt": 1,
+    }
+
+    patient = await admin_db.patients.find_one(
+        {"patientId": patientId, "doctorId": doctorOid}, 
+        projection,
+    )
+
+    if not patient:
+        raise HTTPException(
+            status_code=404,
+            detail="해당 환자를 찾을 수 없거나 담당 의사가 아닙니다.",
+        )
+
+    return {"success": True, "patient": to_serializable(patient)}
+
