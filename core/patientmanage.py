@@ -1,9 +1,11 @@
 # for doctors
 from typing import Dict, Any, Optional
 from fastapi import HTTPException
+from datetime import datetime
 
 from core.db import admin_db
 from core.models.patientinfo import PatientInfo
+from core.models.patient import Patient
 
 async def _get_patient(patient_id: str) -> Optional[Dict[str, Any]]:
     projection = {
@@ -15,6 +17,15 @@ async def _get_patient(patient_id: str) -> Optional[Dict[str, Any]]:
     return await admin_db.users.find_one(
         {"patientId": patient_id, "position": "patient"}, projection
     )
+
+async def create_new_patient(patientInfo: Patient):
+    try:
+        doc = patientInfo.model_dump(by_alias=True) 
+        doc["createdAt"] = datetime.utcnow()
+        result = await admin_db.patients.insert_one(doc)
+        return {"success": True}
+    except:
+        return {"success": False}
 
 async def assign_patient_to_doctor(patientId: str, doctorInfo: Dict[str, Any]):
     if doctorInfo.get("position") != "doctor":

@@ -9,6 +9,10 @@ admin_db = client[settings.admin_db_name]
 async def init_db() -> None:
     if "users" not in await admin_db.list_collection_names():
         await admin_db.create_collection("users")
+    if "patients" not in await admin_db.list_collection_names():
+        await admin_db.create_collection("patients")
+    if "doctors" not in await admin_db.list_collection_names():
+        await admin_db.create_collection("doctors")
 
 async def ensure_indexes() -> None:
     await admin_db.users.create_index(

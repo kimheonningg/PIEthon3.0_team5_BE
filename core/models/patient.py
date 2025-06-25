@@ -1,4 +1,6 @@
 from pydantic import BaseModel, constr
+from typing import List, Optional
+
 from core.models.registerform import Name
 from core.models.noteform import NoteForm
 
@@ -7,5 +9,5 @@ class Patient(BaseModel):
     patientId: str
     doctorLicenceNum: List[str] # multiple doctors are allowed
     name: Name
-    medicalNotes: List[NoteForm] = []
+    medicalNotes: Optional[List[NoteForm]] = None
     
