@@ -43,5 +43,9 @@ Connect using MongoDB Compass
 
 ## Notes
 
-`patientId`: 환자 고유 식별 번호/아이디
+`patientId`: 환자 고유 식별 번호/아이디,
+
 `licenceNum`: 의사 면허 번호
+
+- 가입자는 의사만 있다고 가정 후 설계함
+- 따라서 의사는 회원가입을 통해 만들어지고, 환자는 `patients/create` 호출을 통해 만들어짐
