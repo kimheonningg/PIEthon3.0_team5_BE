@@ -71,9 +71,6 @@ async def register_user(payload: RegisterForm) -> str:
     user_doc["createdAt"] = datetime.utcnow()
     if payload.position == 'doctor':
         user_doc.setdefault("patientList", [])
-    # elif payload.position == 'patient':
-    #     user_doc.setdefault("medicalNotes", [])
-    #     user_doc["patientId"]
 
     try:
         result = await admin_db.users.insert_one(user_doc)

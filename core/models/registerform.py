@@ -3,8 +3,6 @@ from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, EmailStr, constr
 
-from core.models.medicalnote import MedicalNote
-
 Position = Literal["doctor", "patient", "admin", "other"]
 
 class Name(BaseModel):
@@ -19,4 +17,3 @@ class RegisterForm(BaseModel):
     password: str
     position: Position = "doctor"
     licenceNum: str
-    # patientId: Optional[str] = None # 일단 의사만 사용

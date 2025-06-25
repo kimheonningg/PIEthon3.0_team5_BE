@@ -13,14 +13,14 @@ async def add_new_note(
     doctorInfo: Dict,
 ) -> Dict:
     if doctorInfo["position"] != "doctor":
-        raise HTTPException(403, "Only doctors can create medical notes.")
+        raise HTTPException(403, "의사만 환자 노트를 만들 수 있습니다.")
         
-    patient = await admin_db.users.find_one(
-        {"patientId": patientId, "position": "patient"},
+    patient = await admin_db.patients.find_one(
+        {"patientId": patientId},
         projection={"_id": 1},
     )
     if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
+        raise HTTPException(status_code=404, detail="환자 정보가 없습니다. 환자 정보를 등록해주세요.")
 
     now = datetime.utcnow()
     noteOid = str(ObjectId())
@@ -36,7 +36,7 @@ async def add_new_note(
         "deleted": False,
     }
 
-    result = await admin_db.users.update_one(
+    result = await admin_db.patients.update_one(
         {"patientId": patientId}, {"$push": {"medicalNotes": noteDoc}}
     )
 
