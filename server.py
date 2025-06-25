@@ -18,13 +18,13 @@ from core.auth import (
     change_password
 )
 from core.db import ensure_indexes, init_db
-from core.notesmanage import (
+from core.manage_funcs.notesmanage import (
     add_new_note,
     update_existing_note,
     get_all_notes,
     get_specific_note
 )
-from core.patientmanage import (
+from core.manage_funcs.patientmanage import (
     create_new_patient,
     assign_patient_to_doctor
 )
