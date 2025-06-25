@@ -1,6 +1,6 @@
 # file for functions that handle medical notes
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Any
 from bson import ObjectId
 from fastapi import HTTPException, status
 
@@ -26,7 +26,7 @@ async def add_new_note(
     noteOid = str(ObjectId())
     noteDoc = {
         "_id": noteOid,
-        "doctorId": str(doctorInfo["_id"]),
+        "doctorLicenceNum": [doctorInfo.get("licenceNum")],
         "patientId": patientId,
         "createdAt": now,
         "lastModified": now,
@@ -38,7 +38,7 @@ async def add_new_note(
 
     insert_result = await data_db.notes.insert_one(noteDoc)
 
-    if not insert_res.acknowledged:
+    if not insert_result.acknowledged:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="저장에 실패했습니다."
@@ -90,20 +90,16 @@ async def update_existing_note(
 
     set_ops["lastModified"] = datetime.utcnow()
 
-    update_res = await data_db.notes.update_one(
-        {
-            "_id": noteId,
-            "deleted": False,
-        },
-        {"$set": set_ops},
+    update_doc: Dict[str, Any] = {
+        "$set": set_ops, 
+        "$addToSet": {"doctorLicenceNum": doctorInfo.get("licenceNum")}
+    }
+
+    update_result = await data_db.notes.update_one(
+        {"_id": str(noteId), "deleted": False},
+        update_doc,
     )
 
-    if update_res.matched_count == 0:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="노트를 찾을 수 없습니다.",
-        )
-
-    updated_note = await data_db.notes.find_one({"_id": noteId})
+    updated_note = await data_db.notes.find_one({"_id": str(noteId)})
 
     return {"success": True, "note": updated_note}

@@ -1,7 +1,7 @@
 # medical notes
 
 from pydantic import BaseModel, ConfigDict
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 from bson import ObjectId
 from datetime import datetime
 
@@ -11,6 +11,12 @@ class CreateNoteForm(BaseModel):
     title: str
     content: str
     noteType: MedicalNoteType = "other"
+
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        json_encoders={ObjectId: str}, 
+    )
+
 
 class UpdateNoteForm(BaseModel):
     patientId: str
@@ -25,11 +31,16 @@ class UpdateNoteForm(BaseModel):
 
 class NoteForm(BaseModel):
     patientId: str
-    doctorLicenceNum: str
+    doctorLicenceNum: List[str] # multiple doctors can add or edit notes
     createdAt: datetime
     lastModified: datetime
     title: str
     content: str
     noteType: MedicalNoteType
     deleted: bool
+
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        json_encoders={ObjectId: str}, 
+    )
 
