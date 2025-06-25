@@ -36,7 +36,25 @@ async def add_new_note(
         "deleted": False,
     }
 
-    result = await data_db.notes.insert_one(noteDoc)
+    insert_result = await data_db.notes.insert_one(noteDoc)
+
+    if not insert_res.acknowledged:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="저장에 실패했습니다."
+        )
+
+    update_result = await admin_db.patients.update_one(
+        {"patientId": patientId},
+        {"$push": {"medicalNotes": noteOid}},
+    )
+
+    if update_result.modified_count == 0:
+        await data_db.notes.delete_one({"_id": noteOid})
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="노트는 생성되었으나 환자 문서 업데이트에 오류가 발생했습니다."
+        )
 
     return {"success": True, "note": noteDoc}
 
@@ -55,40 +73,37 @@ async def update_existing_note(
 
     if not patient:
         raise HTTPException(status_code=404, detail="환자 정보가 존재하지 않습니다.")
-
+    
     set_ops: Dict[str, Any] = {}
     if noteIn.title is not None:
-        set_ops["medicalNotes.$[note].title"] = noteIn.title
+        set_ops["title"] = noteIn.title
     if noteIn.content is not None:
-        set_ops["medicalNotes.$[note].content"] = noteIn.content
+        set_ops["content"] = noteIn.content
     if noteIn.noteType is not None:
-        set_ops["medicalNotes.$[note].noteType"] = noteIn.noteType
-    set_ops["medicalNotes.$[note].lastModified"] = datetime.utcnow()
+        set_ops["noteType"] = noteIn.noteType
 
-    if len(set_ops) == 1:
+    if not set_ops:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="수정할 내용이 없습니다.",
         )
-        
-    note_id_filter = str(noteId)
-    
-    result = await admin_db.patients.update_one(
-        {"patientId": noteIn.patientId},
+
+    set_ops["lastModified"] = datetime.utcnow()
+
+    update_res = await data_db.notes.update_one(
+        {
+            "_id": noteId,
+            "deleted": False,
+        },
         {"$set": set_ops},
-        array_filters=[
-            {
-                "note._id": note_id_filter,
-                "note.doctorId": str(doctorInfo["_id"]),
-                "note.deleted": False,
-            }
-        ],
     )
 
-    if result.modified_count == 0:
+    if update_res.matched_count == 0:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Note not found or you are not the author.",
+            detail="노트를 찾을 수 없습니다.",
         )
 
-    return {"success": True}
+    updated_note = await data_db.notes.find_one({"_id": noteId})
+
+    return {"success": True, "note": updated_note}
