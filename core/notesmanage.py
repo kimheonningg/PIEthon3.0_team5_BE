@@ -5,7 +5,7 @@ from bson import ObjectId
 from fastapi import HTTPException, status
 
 from core.models.noteform import CreateNoteForm, UpdateNoteForm
-from core.db import admin_db
+from core.db import admin_db, data_db
 
 async def add_new_note(
     patientId: str,
@@ -36,16 +36,7 @@ async def add_new_note(
         "deleted": False,
     }
 
-    result = await admin_db.patients.update_one(
-        {"patientId": patientId}, {"$push": {"medicalNotes": noteDoc}}
-    )
-
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Patient not found")
-
-    success = result.modified_count == 1
-    if not success:
-        raise HTTPException(status_code=500, detail="Failed to append medical note")
+    result = await data_db.notes.insert_one(noteDoc)
 
     return {"success": True, "note": noteDoc}
 

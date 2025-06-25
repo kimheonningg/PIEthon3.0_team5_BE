@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     secret_key: str = Field(..., alias="SECRET_KEY")
     mongodb_uri: str = Field(..., env="MONGODB_URI")
     admin_db_name: str = "admin"
+    data_db_name: str = "data"
 
     model_config = SettingsConfigDict(
         env_file=env_path,  

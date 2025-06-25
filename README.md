@@ -49,3 +49,8 @@ Connect using MongoDB Compass
 
 - 가입자는 의사만 있다고 가정 후 설계함
 - 따라서 의사는 회원가입을 통해 만들어지고, 환자는 `patients/create` 호출을 통해 만들어짐
+
+### DB structure
+
+- `admin`: contains information of users or people such as `patients`, `users`(or doctors)
+- `data`: contains other medical data such as `notes`(medical notes)
