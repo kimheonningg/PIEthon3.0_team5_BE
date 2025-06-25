@@ -11,7 +11,7 @@ async def _get_patient(patientId: str) -> Optional[Dict[str, Any]]:
         "patientId": 1,
         "name": 1,
         "phoneNum": 1,
-        "doctorLicenceNum": 1,
+        "doctorId": 1,
         "medicalNotes": 1,
         "createdAt": 1
     }
@@ -23,6 +23,8 @@ async def create_new_patient(patientInfo: Patient):
     try:
         doc = patientInfo.model_dump(by_alias=True) 
         doc["createdAt"] = datetime.utcnow()
+        if doc.get("doctorId") is None:
+            doc["doctorId"] = []
         if doc.get("medicalNotes") is None:
             doc["medicalNotes"] = []
         result = await admin_db.patients.insert_one(doc)
@@ -41,7 +43,7 @@ async def assign_patient_to_doctor(patientId: str, doctorInfo: Dict[str, Any]):
     already_assigned = await admin_db.users.find_one(
         {
             "_id": doctorInfo["_id"],
-            "patientList.patientId": patientId,
+            "patientList": str(patientDoc["_id"]),
         },
         {"_id": 1},
     )
@@ -52,16 +54,22 @@ async def assign_patient_to_doctor(patientId: str, doctorInfo: Dict[str, Any]):
         )
 
     patientInfo : Patient = {
+        "_id": patientDoc["_id"],
         "patientId": patientDoc["patientId"],
         "name": patientDoc.get("name", {}),
         "phoneNum": patientDoc.get("phoneNum", ""),
         "medicalNotes": patientDoc.get("medicalNotes", []),
-        "doctorLicenceNum": patientDoc.get("doctorLicenceNum", []),
+        "doctorId": patientDoc.get("doctorId", []),
         "createdAt": patientDoc.get("createdAt")
     }
     
     result = await admin_db.users.update_one(
-        {"_id": doctorInfo["_id"]}, {"$addToSet": {"patientList": patientInfo}}
+        {"_id": doctorInfo["_id"]}, {"$addToSet": {"patientList": str(patientInfo["_id"])}}
+    )
+
+    await admin_db.patients.update_one(
+        {"_id": patientDoc["_id"]},
+        {"$addToSet": {"doctorId": str(doctorInfo["_id"])}}
     )
 
     success = result.modified_count == 1
