@@ -31,7 +31,7 @@ class UpdateNoteForm(BaseModel):
 
 class NoteForm(BaseModel):
     patientId: str
-    doctorLicenceNum: List[str] # multiple doctors can add or edit notes
+    doctorId: List[str] # multiple doctors can add or edit notes
     createdAt: datetime
     lastModified: datetime
     title: str

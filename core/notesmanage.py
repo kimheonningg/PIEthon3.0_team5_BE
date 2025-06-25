@@ -26,7 +26,7 @@ async def add_new_note(
     noteOid = str(ObjectId())
     noteDoc = {
         "_id": noteOid,
-        "doctorLicenceNum": [doctorInfo.get("licenceNum")],
+        "doctorId": [str(doctorInfo.get("_id"))],
         "patientId": patientId,
         "createdAt": now,
         "lastModified": now,
@@ -46,7 +46,10 @@ async def add_new_note(
 
     update_result = await admin_db.patients.update_one(
         {"patientId": patientId},
-        {"$push": {"medicalNotes": noteOid}},
+        {"$push": {
+            "doctorId": str(doctorInfo["_id"]),
+            "medicalNotes": noteOid
+        }},
     )
 
     if update_result.modified_count == 0:
@@ -92,7 +95,7 @@ async def update_existing_note(
 
     update_doc: Dict[str, Any] = {
         "$set": set_ops, 
-        "$addToSet": {"doctorLicenceNum": doctorInfo.get("licenceNum")}
+        "$push": {"doctorId": str(doctorInfo.get("_id"))},
     }
 
     update_result = await data_db.notes.update_one(
