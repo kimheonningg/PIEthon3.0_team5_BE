@@ -5,12 +5,15 @@ from pymongo import ASCENDING
 settings = get_settings()
 client = AsyncIOMotorClient(settings.mongodb_uri)
 admin_db = client[settings.admin_db_name]
+data_db = client[settings.data_db_name]
 
 async def init_db() -> None:
     if "users" not in await admin_db.list_collection_names():
         await admin_db.create_collection("users")
     if "patients" not in await admin_db.list_collection_names():
         await admin_db.create_collection("patients")
+    if "notes" not in await data_db.list_collection_names():
+        await data_db.create_collection("notes")
         
 async def ensure_indexes() -> None:
     await admin_db.users.create_index(
