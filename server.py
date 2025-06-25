@@ -20,7 +20,9 @@ from core.auth import (
 from core.db import ensure_indexes, init_db
 from core.notesmanage import (
     add_new_note,
-    update_existing_note
+    update_existing_note,
+    get_all_notes,
+    get_specific_note
 )
 from core.patientmanage import (
     create_new_patient,
@@ -102,6 +104,22 @@ async def update_note(
 ):
     result = await update_existing_note(note_id, note_in, current_user)
     return result
+
+@app.get("/patients/notes/all/{patient_id}") # get all notes for that patient with patient_id
+async def get_notes(
+    patient_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    result = await get_all_notes(patient_id, current_user)
+    return result
+
+# @app.get("patients/note/{note_id}") # get specific note with note_id
+# async def get_note(
+#     note_id:str,
+#     current_user: dict = Depends(get_current_user),
+# ):
+#     result = await get_specific_note(note_id, current_user)
+#     return result
 
 if __name__ == "__main__":
     uvicorn.run("server:app", host="localhost", port=8000, reload=True)

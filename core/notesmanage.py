@@ -106,3 +106,40 @@ async def update_existing_note(
     updated_note = await data_db.notes.find_one({"_id": str(noteId)})
 
     return {"success": True, "note": updated_note}
+
+async def get_all_notes(
+    patientId: str,
+    doctorInfo: Dict,
+):
+    if doctorInfo["position"] != "doctor":
+        raise HTTPException(403, "의사만 노트를 조회할 수 있습니다.")
+
+    patient_exists = await admin_db.patients.find_one(
+        {"patientId": patientId}, {"_id": 1}
+    )
+    if not patient_exists:
+        raise HTTPException(404, "환자 정보가 없습니다.")
+    
+    cursor = data_db.notes.find(
+        {"patientId": patientId, "deleted": False}
+    ).sort("lastModified", -1)
+
+    notes = await cursor.to_list(length=None)
+
+    return {"success": True, "notes": notes}
+
+async def get_specific_note(
+    noteId: str,
+    doctorInfo: Dict,
+):
+    if doctorInfo.get("position") != "doctor":
+        raise HTTPException(403, "의사만 노트를 조회할 수 있습니다.")
+    
+    note = await data_db.notes.find_one(
+        {"_id": str(noteId), "deleted": False}
+    )
+
+    if not note:
+        raise HTTPException(404, "노트를 찾을 수 없습니다.")
+
+    return {"success": True, "note": note}
