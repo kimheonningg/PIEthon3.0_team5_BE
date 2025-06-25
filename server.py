@@ -22,7 +22,10 @@ from core.notesmanage import (
     add_new_note,
     update_existing_note
 )
-from core.patientmanage import create_new_patient
+from core.patientmanage import (
+    create_new_patient,
+    assign_patient_to_doctor
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -74,6 +77,14 @@ async def create_patient(patient_info: Patient):
     success = await create_new_patient(patient_info)
     return success
 
+@app.post("/patients/assign/{patientId}")
+async def assign_patient(
+    patientId: str,
+    currentUser: dict = Depends(get_current_user),
+):
+    result = await assign_patient_to_doctor(patientId, currentUser)
+    return result
+
 @app.post("/patients/notes/create/{patient_id}")
 async def create_note(
     patient_id: str,
@@ -90,14 +101,6 @@ async def update_note(
     current_user: dict = Depends(get_current_user),
 ):
     result = await update_existing_note(note_id, note_in, current_user)
-    return result
-
-@app.post("/patients/assign/{patientId}")
-async def assign_patient(
-    patientId: str,
-    currentUser: dict = Depends(get_current_user),
-):
-    result = await assign_patient_to_doctor(patientId, currentUser)
     return result
 
 if __name__ == "__main__":

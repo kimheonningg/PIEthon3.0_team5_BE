@@ -11,8 +11,9 @@ async def _get_patient(patientId: str) -> Optional[Dict[str, Any]]:
         "patientId": 1,
         "name": 1,
         "phoneNum": 1,
-        "doctorLicenceNum"
+        "doctorLicenceNum": 1,
         "medicalNotes": 1,
+        "createdAt": 1
     }
     return await admin_db.patients.find_one(
         {"patientId": patientId}, projection
@@ -29,7 +30,7 @@ async def create_new_patient(patientInfo: Patient):
 
 async def assign_patient_to_doctor(patientId: str, doctorInfo: Dict[str, Any]):
     if doctorInfo.get("position") != "doctor":
-        raise HTTPException(status_code=403, detail="Only doctors can assign patients")
+        raise HTTPException(status_code=403, detail="의사만 환자를 등록할 수 있습니다.")
 
     patientDoc = await _get_patient(patientId)
     if not patientDoc:
@@ -40,7 +41,8 @@ async def assign_patient_to_doctor(patientId: str, doctorInfo: Dict[str, Any]):
         "name": patientDoc.get("name", {}),
         "phoneNum": patientDoc.get("phoneNum", ""),
         "medicalNotes": patientDoc.get("medicalNotes", []),
-        "doctorLicenceNum": patientDoc.get("doctorLicenceNum", [])
+        "doctorLicenceNum": patientDoc.get("doctorLicenceNum", []),
+        "createdAt": patientDoc.get("createdAt")
     }
     
     result = await admin_db.users.update_one(
