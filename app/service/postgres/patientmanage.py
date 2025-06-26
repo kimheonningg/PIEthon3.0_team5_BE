@@ -81,6 +81,11 @@ async def get_all_assigned_patients(current_user: User, db: AsyncSession):
     for patient in user_with_patients.patients:
         # Get doctor IDs from the relationship
         doctor_ids = [doctor.user_id for doctor in patient.doctors]
+
+        # Get doctor full names from the relationship
+        doctor_names = [
+            f"{doctor.last_name} {doctor.first_name}" for doctor in patient.doctors
+        ]
         
         patient_dict = {
             "patient_mrn": patient.patient_mrn,
@@ -90,6 +95,7 @@ async def get_all_assigned_patients(current_user: User, db: AsyncSession):
                 "last_name": patient.last_name
             },
             "doctor_id": doctor_ids,
+            "doctor_name": doctor_names,
             "medical_notes": [],  # Will be populated from notes relationship if needed
             "created_at": patient.created_at,
             "age": patient.age,
@@ -125,6 +131,11 @@ async def get_specific_patient(patient_mrn: str, current_user: User, db: AsyncSe
     # Get doctor IDs from the relationship
     doctor_ids = [doctor.user_id for doctor in patient.doctors]
 
+    # Get doctor full names from the relationship
+    doctor_names = [
+        f"{doctor.last_name} {doctor.first_name}" for doctor in patient.doctors
+    ]
+
     patient_dict = {
         "patient_mrn": patient.patient_mrn,
         "phone_num": patient.phone_num,
@@ -133,6 +144,7 @@ async def get_specific_patient(patient_mrn: str, current_user: User, db: AsyncSe
             "last_name": patient.last_name
         },
         "doctor_id": doctor_ids,
+        "doctor_name": doctor_names,
         "medical_notes": [],  # Will be populated from notes relationship if needed
         "created_at": patient.created_at,
         "age": patient.age,
