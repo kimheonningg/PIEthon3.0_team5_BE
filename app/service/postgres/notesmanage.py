@@ -18,7 +18,7 @@ async def add_new_note(
     db: AsyncSession,
 ) -> Dict:
     if current_user.position != "doctor":
-        raise HTTPException(403, "의사만 환자 노트를 만들 수 있습니다.")
+        raise HTTPException(403, "Only doctors can create medical notes.")
         
     # Check if patient exists and load with relationships
     query = select(Patient).options(selectinload(Patient.doctors)).where(Patient.patient_mrn == patient_mrn)
@@ -26,7 +26,7 @@ async def add_new_note(
     patient = result.scalar_one_or_none()
     
     if not patient:
-        raise HTTPException(status_code=404, detail="환자 정보가 없습니다. 환자 정보를 등록해주세요.")
+        raise HTTPException(status_code=404, detail="Patient information does not exist. Please register this patient.")
 
     # Create note with foreign key relationships
     note_id = str(ObjectId())  # Generate unique note ID
@@ -68,7 +68,7 @@ async def add_new_note(
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="저장에 실패했습니다."
+            detail="Failed to save note."
         )
 
 async def update_existing_note(
@@ -78,7 +78,7 @@ async def update_existing_note(
     db: AsyncSession,
 ) -> Dict:
     if current_user.position != "doctor":
-        raise HTTPException(403, "의사만 수정할 수 있습니다.")
+        raise HTTPException(403, "Only doctors can modify this note.")
     
     # Check if patient exists
     query = select(Patient).where(Patient.patient_mrn == note_in.patient_mrn)
@@ -86,7 +86,7 @@ async def update_existing_note(
     patient = result.scalar_one_or_none()
 
     if not patient:
-        raise HTTPException(status_code=404, detail="환자 정보가 존재하지 않습니다.")
+        raise HTTPException(status_code=404, detail="Patient information does not exist. Please register this patient.")
     
     # Get the note with relationships
     note_query = select(Note).options(
@@ -97,7 +97,7 @@ async def update_existing_note(
     note = note_result.scalar_one_or_none()
     
     if not note:
-        raise HTTPException(status_code=404, detail="노트를 찾을 수 없습니다.")
+        raise HTTPException(status_code=404, detail="This note does not exist")
     
     # Check if there's anything to update
     has_updates = False
@@ -114,7 +114,7 @@ async def update_existing_note(
     if not has_updates:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="수정할 내용이 없습니다.",
+            detail="There is nothing to modify",
         )
 
     note.last_modified = datetime.utcnow()
@@ -142,7 +142,7 @@ async def get_all_notes(
     db: AsyncSession,
 ):
     if current_user.position != "doctor":
-        raise HTTPException(403, "의사만 노트를 조회할 수 있습니다.")
+        raise HTTPException(403, "Only doctors can view medical notes.")
 
     # Check if patient exists
     query = select(Patient).where(Patient.patient_mrn == patient_mrn)
@@ -150,7 +150,7 @@ async def get_all_notes(
     patient = result.scalar_one_or_none()
     
     if not patient:
-        raise HTTPException(404, "환자 정보가 없습니다.")
+        raise HTTPException(404, "Patient information does not exist. Please register this patient.")
     
     # Get all notes for this patient using foreign key relationship
     notes_query = select(Note).options(
@@ -187,7 +187,7 @@ async def get_specific_note(
     db: AsyncSession,
 ):
     if current_user.position != "doctor":
-        raise HTTPException(403, "의사만 노트를 조회할 수 있습니다.")
+        raise HTTPException(403, "Only doctors can view medical notes.")
     
     # Get the note with relationships
     query = select(Note).options(
@@ -198,7 +198,7 @@ async def get_specific_note(
     note = result.scalar_one_or_none()
 
     if not note:
-        raise HTTPException(404, "노트를 찾을 수 없습니다.")
+        raise HTTPException(404, "This note does not exist.")
 
     # Convert note to dict for response
     note_dict = {
