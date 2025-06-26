@@ -7,9 +7,9 @@ from sqlalchemy import select, and_
 from sqlalchemy.orm import selectinload
 from bson import ObjectId
 
-from core.models.noteform import CreateNoteForm, UpdateNoteForm
-from core.db import User, Patient, Note
-from core.utils import to_serializable
+from app.dto.noteform import CreateNoteForm, UpdateNoteForm
+from app.core.db import User, Patient, Note
+from app.utils.utils import to_serializable
 
 async def add_new_note(
     patient_id: str,
@@ -36,7 +36,7 @@ async def add_new_note(
         doctor_id=current_user.user_id,
         title=note_in.title,
         content=note_in.content,
-        note_type=note_in.noteType
+        note_type=note_in.note_type
     )
 
     try:
@@ -52,13 +52,13 @@ async def add_new_note(
         # Convert note to dict for response
         note_dict = {
             "id": note.note_id,
-            "patientId": patient_id,  # Return the string patient_id for API compatibility
-            "doctorId": [current_user.user_id],  # Keep as list for API compatibility
+            "patient_id": patient_id,  # Return the string patient_id for API compatibility
+            "doctor_id": [current_user.user_id],  # Keep as list for API compatibility
             "title": note.title,
             "content": note.content,
-            "noteType": note.note_type,
-            "createdAt": note.created_at,
-            "lastModified": note.last_modified,
+            "note_type": note.note_type,
+            "created_at": note.created_at,
+            "last_modified": note.last_modified,
             "deleted": note.deleted
         }
         
@@ -81,7 +81,7 @@ async def update_existing_note(
         raise HTTPException(403, "의사만 수정할 수 있습니다.")
     
     # Check if patient exists
-    query = select(Patient).where(Patient.patient_id == note_in.patientId)
+    query = select(Patient).where(Patient.patient_id == note_in.patient_id)
     result = await db.execute(query)
     patient = result.scalar_one_or_none()
 
@@ -107,8 +107,8 @@ async def update_existing_note(
     if note_in.content is not None:
         note.content = note_in.content
         has_updates = True
-    if note_in.noteType is not None:
-        note.note_type = note_in.noteType
+    if note_in.note_type is not None:
+        note.note_type = note_in.note_type
         has_updates = True
 
     if not has_updates:
@@ -124,13 +124,13 @@ async def update_existing_note(
     # Convert note to dict for response
     note_dict = {
         "id": note.note_id,
-        "patientId": note.patient.patient_id,  # Get patient_id from relationship
-        "doctorId": [note.doctor.user_id],  # Get doctor ID from relationship, keep as list for API compatibility
+        "patient_id": note.patient.patient_id,  # Get patient_id from relationship
+        "doctor_id": [note.doctor.user_id],  # Get doctor ID from relationship, keep as list for API compatibility
         "title": note.title,
         "content": note.content,
-        "noteType": note.note_type,
-        "createdAt": note.created_at,
-        "lastModified": note.last_modified,
+        "note_type": note.note_type,
+        "created_at": note.created_at,
+        "last_modified": note.last_modified,
         "deleted": note.deleted
     }
 
@@ -168,13 +168,13 @@ async def get_all_notes(
     for note in notes:
         note_dict = {
             "id": note.note_id,
-            "patientId": note.patient.patient_id,  # Get string patient_id from relationship
-            "doctorId": [note.doctor.user_id],  # Keep as list for API compatibility
+            "patient_id": note.patient.patient_id,  # Get string patient_id from relationship
+            "doctor_id": [note.doctor.user_id],  # Keep as list for API compatibility
             "title": note.title,
             "content": note.content,
-            "noteType": note.note_type,
-            "createdAt": note.created_at,
-            "lastModified": note.last_modified,
+            "note_type": note.note_type,
+            "created_at": note.created_at,
+            "last_modified": note.last_modified,
             "deleted": note.deleted
         }
         note_dicts.append(to_serializable(note_dict))
@@ -203,13 +203,13 @@ async def get_specific_note(
     # Convert note to dict for response
     note_dict = {
         "id": note.note_id,
-        "patientId": note.patient.patient_id,  # Get string patient_id from relationship
-        "doctorId": [note.doctor.user_id],  # Keep as list for API compatibility
+        "patient_id": note.patient.patient_id,  # Get string patient_id from relationship
+        "doctor_id": [note.doctor.user_id],  # Keep as list for API compatibility
         "title": note.title,
         "content": note.content,
-        "noteType": note.note_type,
-        "createdAt": note.created_at,
-        "lastModified": note.last_modified,
+        "note_type": note.note_type,
+        "created_at": note.created_at,
+        "last_modified": note.last_modified,
         "deleted": note.deleted
     }
 

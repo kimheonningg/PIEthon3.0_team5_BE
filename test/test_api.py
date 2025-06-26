@@ -60,7 +60,7 @@ class APITester:
         import os
         sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         
-        from core.db import AsyncSessionLocal, User, Patient, Note, doctor_patient_association
+        from app.core.db import AsyncSessionLocal, User, Patient, Note, doctor_patient_association
         from sqlalchemy import select, delete
         
         async with AsyncSessionLocal() as db:
@@ -103,18 +103,18 @@ class APITester:
         print("🔍 Testing user registration...")
         user_data = {
             "email": "test@example.com",
-            "phoneNum": "01012345678",
+            "phone_num": "01012345678",
             "name": {
-                "firstName": "John",
-                "lastName": "Doe"
+                "first_name": "John",
+                "last_name": "Doe"
             },
-            "userId": "testdoctor",
+            "user_id": "testdoctor",
             "password": "testpassword123",
             "position": "doctor",
-            "licenceNum": "DOC123456"
+            "licence_num": "DOC123456"
         }
         
-        response = await client.post(f"{BASE_URL}/register", json=user_data)
+        response = await client.post(f"{BASE_URL}/auth/register", json=user_data)
         assert response.status_code == 200
         data = response.json()
         assert "message" in data
@@ -127,11 +127,11 @@ class APITester:
         """Test user login."""
         print("🔍 Testing user login...")
         login_data = {
-            "userId": "testdoctor",
+            "user_id": "testdoctor",
             "password": "testpassword123"
         }
         
-        response = await client.post(f"{BASE_URL}/login", json=login_data)
+        response = await client.post(f"{BASE_URL}/auth/login", json=login_data)
         assert response.status_code == 200
         data = response.json()
         assert "access_token" in data
@@ -146,44 +146,44 @@ class APITester:
         """Test find user ID."""
         print("🔍 Testing find user ID...")
         find_data = {
-            "phoneNum": "01012345678",
+            "phone_num": "01012345678",
             "name": {
-                "firstName": "John",
-                "lastName": "Doe"
+                "first_name": "John",
+                "last_name": "Doe"
             }
         }
         
-        response = await client.post(f"{BASE_URL}/find_id", json=find_data)
+        response = await client.post(f"{BASE_URL}/auth/find_id", json=find_data)
         assert response.status_code == 200
         data = response.json()
         assert data["success"] == True
-        assert data["userId"] == "testdoctor"
+        assert data["user_id"] == "testdoctor"
         print("✅ Find user ID passed")
 
     async def test_05_change_password(self, client):
         """Test change password."""
         print("🔍 Testing change password...")
         change_pw_data = {
-            "userId": "testdoctor",
+            "user_id": "testdoctor",
             "name": {
-                "firstName": "John",
-                "lastName": "Doe"
+                "first_name": "John",
+                "last_name": "Doe"
             },
-            "originalPw": "testpassword123",
-            "newPw": "newpassword123"
+            "original_pw": "testpassword123",
+            "new_pw": "newpassword123"
         }
         
-        response = await client.post(f"{BASE_URL}/change_pw", json=change_pw_data)
+        response = await client.post(f"{BASE_URL}/auth/change_pw", json=change_pw_data)
         assert response.status_code == 200
         data = response.json()
         assert data["success"] == True
         
         # Test login with new password
         login_data = {
-            "userId": "testdoctor",
+            "user_id": "testdoctor",
             "password": "newpassword123"
         }
-        response = await client.post(f"{BASE_URL}/login", json=login_data)
+        response = await client.post(f"{BASE_URL}/auth/login", json=login_data)
         assert response.status_code == 200
         
         # Update token
@@ -195,11 +195,11 @@ class APITester:
         """Test patient creation."""
         print("🔍 Testing patient creation...")
         patient_data = {
-            "phoneNum": "01087654321",
-            "patientId": "P12345",
+            "phone_num": "01087654321",
+            "patient_id": "P12345",
             "name": {
-                "firstName": "Jane",
-                "lastName": "Smith"
+                "first_name": "Jane",
+                "last_name": "Smith"
             }
         }
         
@@ -224,7 +224,7 @@ class APITester:
     async def test_08_get_all_patients(self, client):
         """Test get all patients."""
         print("🔍 Testing get all patients...")
-        response = await client.get(f"{BASE_URL}/patients", headers=self.headers)
+        response = await client.get(f"{BASE_URL}/patients/", headers=self.headers)
         print(f"Response status: {response.status_code}")
         print(f"Response data: {response.json()}")
         assert response.status_code == 200
@@ -238,14 +238,14 @@ class APITester:
         """Test get specific patient."""
         print("🔍 Testing get specific patient...")
         response = await client.get(
-            f"{BASE_URL}/patient/P12345",
+            f"{BASE_URL}/patients/P12345",
             headers=self.headers
         )
         assert response.status_code == 200
         data = response.json()
         assert data["success"] == True
         assert "patient" in data
-        assert data["patient"]["patientId"] == "P12345"
+        assert data["patient"]["patient_id"] == "P12345"
         print("✅ Get specific patient passed")
 
     async def test_10_create_note(self, client):
@@ -254,11 +254,11 @@ class APITester:
         note_data = {
             "title": "Test Medical Note",
             "content": "Patient shows improvement after treatment",
-            "noteType": "consult"
+            "note_type": "consult"
         }
         
         response = await client.post(
-            f"{BASE_URL}/patients/notes/create/P12345",
+            f"{BASE_URL}/notes/create/P12345",
             json=note_data,
             headers=self.headers
         )
@@ -273,7 +273,7 @@ class APITester:
         """Test get all notes."""
         print("🔍 Testing get all notes...")
         response = await client.get(
-            f"{BASE_URL}/patients/notes/all/P12345",
+            f"{BASE_URL}/notes/all/P12345",
             headers=self.headers
         )
         assert response.status_code == 200
@@ -287,7 +287,7 @@ class APITester:
         """Test get specific note."""
         print("🔍 Testing get specific note...")
         response = await client.get(
-            f"{BASE_URL}/patients/note/{self.note_id}",
+            f"{BASE_URL}/notes/{self.note_id}",
             headers=self.headers
         )
         assert response.status_code == 200
@@ -301,14 +301,14 @@ class APITester:
         """Test note update."""
         print("🔍 Testing note update...")
         update_data = {
-            "patientId": "P12345",
+            "patient_id": "P12345",
             "title": "Updated Medical Note",
             "content": "Updated content with new findings",
-            "noteType": "radiology"
+            "note_type": "radiology"
         }
         
         response = await client.post(
-            f"{BASE_URL}/patients/notes/update/{self.note_id}",
+            f"{BASE_URL}/notes/update/{self.note_id}",
             json=update_data,
             headers=self.headers
         )
@@ -316,7 +316,7 @@ class APITester:
         data = response.json()
         assert data["success"] == True
         assert data["note"]["title"] == "Updated Medical Note"
-        assert data["note"]["noteType"] == "radiology"
+        assert data["note"]["note_type"] == "radiology"
         print("✅ Note update passed")
 
     async def test_14_unauthorized_access(self, client):
@@ -324,12 +324,12 @@ class APITester:
         print("🔍 Testing unauthorized access...")
         
         # Test without token
-        response = await client.get(f"{BASE_URL}/patients")
+        response = await client.get(f"{BASE_URL}/patients/")
         assert response.status_code == 401
         
         # Test with invalid token
         invalid_headers = {"Authorization": "Bearer invalid_token"}
-        response = await client.get(f"{BASE_URL}/patients", headers=invalid_headers)
+        response = await client.get(f"{BASE_URL}/patients/", headers=invalid_headers)
         assert response.status_code == 401
         print("✅ Unauthorized access tests passed")
 
@@ -339,24 +339,24 @@ class APITester:
         
         # Test nonexistent patient
         response = await client.get(
-            f"{BASE_URL}/patient/NONEXISTENT",
+            f"{BASE_URL}/patients/NONEXISTENT",
             headers=self.headers
         )
         assert response.status_code == 404
         
         # Test nonexistent note
         response = await client.get(
-            f"{BASE_URL}/patients/note/nonexistent_note_id",
+            f"{BASE_URL}/notes/nonexistent_note_id",
             headers=self.headers
         )
         assert response.status_code == 404
         
         # Test invalid login
         invalid_login = {
-            "userId": "nonexistent",
+            "user_id": "nonexistent",
             "password": "wrongpassword"
         }
-        response = await client.post(f"{BASE_URL}/login", json=invalid_login)
+        response = await client.post(f"{BASE_URL}/auth/login", json=invalid_login)
         assert response.status_code == 401
         
         print("✅ Error cases passed")
