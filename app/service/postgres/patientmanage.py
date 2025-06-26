@@ -36,11 +36,11 @@ async def create_new_patient(patient_info: PatientModel, db: AsyncSession):
 
 async def assign_patient_to_doctor(patient_mrn: str, current_user: User, db: AsyncSession):
     if current_user.position != "doctor":
-        raise HTTPException(status_code=403, detail="의사만 환자를 등록할 수 있습니다.")
+        raise HTTPException(status_code=403, detail="Only doctors can assign patients.")
 
     patient = await _get_patient(patient_mrn, db)
     if not patient:
-        raise HTTPException(status_code=404, detail="환자 정보가 없습니다. 환자 정보를 등록해주세요.")
+        raise HTTPException(status_code=404, detail="Patient information does not exist. Please register this patient.")
 
     # Load current_user with patients relationship 
     query = select(User).options(selectinload(User.patients)).where(User.user_id == current_user.user_id)
@@ -48,13 +48,13 @@ async def assign_patient_to_doctor(patient_mrn: str, current_user: User, db: Asy
     user_with_patients = result.scalar_one_or_none()
     
     if not user_with_patients:
-        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+        raise HTTPException(status_code=404, detail="Cannot find user.")
 
     # Check if already assigned using relationship
     if patient in user_with_patients.patients:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="이미 이 의사에게 배정된 환자입니다.",
+            detail="This patient is already assigned to this doctor.",
         )
 
     # Add patient to doctor's patient list using relationship
@@ -65,7 +65,7 @@ async def assign_patient_to_doctor(patient_mrn: str, current_user: User, db: Asy
 
 async def get_all_assigned_patients(current_user: User, db: AsyncSession):
     if current_user.position != "doctor":
-        raise HTTPException(403, "의사만 환자 목록을 조회할 수 있습니다.")
+        raise HTTPException(403, "Only doctors can view patient information.")
 
     # Load user with patients relationship and nested doctors relationship
     query = select(User).options(
@@ -102,7 +102,7 @@ async def get_all_assigned_patients(current_user: User, db: AsyncSession):
 
 async def get_specific_patient(patient_mrn: str, current_user: User, db: AsyncSession):
     if current_user.position != "doctor":
-        raise HTTPException(403, "의사만 환자 목록을 조회할 수 있습니다.")
+        raise HTTPException(403, "Only doctors can view patient information.")
     
     # Get patient with doctors relationship loaded
     query = select(Patient).options(selectinload(Patient.doctors)).where(Patient.patient_mrn == patient_mrn)
@@ -112,14 +112,14 @@ async def get_specific_patient(patient_mrn: str, current_user: User, db: AsyncSe
     if not patient:
         raise HTTPException(
             status_code=404,
-            detail="해당 환자를 찾을 수 없습니다.",
+            detail="Cannot find this patient.",
         )
     
     # Check if doctor is assigned to this patient using relationship
     if current_user not in patient.doctors:
         raise HTTPException(
             status_code=404,
-            detail="해당 환자의 담당 의사가 아닙니다.",
+            detail="You are not the assigned doctor to this patient.",
         )
 
     # Get doctor IDs from the relationship
