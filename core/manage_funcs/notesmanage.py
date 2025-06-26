@@ -1,145 +1,216 @@
 # file for functions that handle medical notes
 from datetime import datetime
 from typing import Dict, Any
-from bson import ObjectId
 from fastapi import HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, and_
+from sqlalchemy.orm import selectinload
+from bson import ObjectId
 
 from core.models.noteform import CreateNoteForm, UpdateNoteForm
-from core.db import admin_db, data_db
+from core.db import User, Patient, Note
+from core.utils import to_serializable
 
 async def add_new_note(
-    patientId: str,
-    noteIn: CreateNoteForm,
-    doctorInfo: Dict,
+    patient_id: str,
+    note_in: CreateNoteForm,
+    current_user: User,
+    db: AsyncSession,
 ) -> Dict:
-    if doctorInfo["position"] != "doctor":
+    if current_user.position != "doctor":
         raise HTTPException(403, "의사만 환자 노트를 만들 수 있습니다.")
         
-    patient = await admin_db.patients.find_one(
-        {"patientId": patientId},
-        projection={"_id": 1},
-    )
+    # Check if patient exists and load with relationships
+    query = select(Patient).options(selectinload(Patient.doctors)).where(Patient.patient_id == patient_id)
+    result = await db.execute(query)
+    patient = result.scalar_one_or_none()
+    
     if not patient:
         raise HTTPException(status_code=404, detail="환자 정보가 없습니다. 환자 정보를 등록해주세요.")
 
-    now = datetime.utcnow()
-    noteOid = str(ObjectId())
-    noteDoc = {
-        "_id": noteOid,
-        "doctorId": [str(doctorInfo.get("_id"))],
-        "patientId": patientId,
-        "createdAt": now,
-        "lastModified": now,
-        "title": noteIn.title,
-        "content": noteIn.content,
-        "noteType": noteIn.noteType,
-        "deleted": False,
-    }
+    # Create note with foreign key relationships
+    note_id = str(ObjectId())  # Generate unique note ID
+    note = Note(
+        note_id=note_id,
+        patient_id=patient.patient_id,
+        doctor_id=current_user.user_id,
+        title=note_in.title,
+        content=note_in.content,
+        note_type=note_in.noteType
+    )
 
-    insert_result = await data_db.notes.insert_one(noteDoc)
-
-    if not insert_result.acknowledged:
+    try:
+        db.add(note)
+        
+        # Add doctor to patient's doctors relationship if not already there
+        if current_user not in patient.doctors:
+            patient.doctors.append(current_user)
+        
+        await db.commit()
+        await db.refresh(note)
+        
+        # Convert note to dict for response
+        note_dict = {
+            "id": note.note_id,
+            "patientId": patient_id,  # Return the string patient_id for API compatibility
+            "doctorId": [current_user.user_id],  # Keep as list for API compatibility
+            "title": note.title,
+            "content": note.content,
+            "noteType": note.note_type,
+            "createdAt": note.created_at,
+            "lastModified": note.last_modified,
+            "deleted": note.deleted
+        }
+        
+        return {"success": True, "note": to_serializable(note_dict)}
+        
+    except Exception as e:
+        await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="저장에 실패했습니다."
         )
 
-    update_result = await admin_db.patients.update_one(
-        {"patientId": patientId},
-        {"$push": {
-            "doctorId": str(doctorInfo["_id"]),
-            "medicalNotes": noteOid
-        }},
-    )
-
-    if update_result.modified_count == 0:
-        await data_db.notes.delete_one({"_id": noteOid})
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="노트는 생성되었으나 환자 문서 업데이트에 오류가 발생했습니다."
-        )
-
-    return {"success": True, "note": noteDoc}
-
 async def update_existing_note(
-    noteId: str,
-    noteIn: UpdateNoteForm,
-    doctorInfo: Dict,
+    note_id: str,  # Keep as string
+    note_in: UpdateNoteForm,
+    current_user: User,
+    db: AsyncSession,
 ) -> Dict:
-    if doctorInfo["position"] != "doctor":
+    if current_user.position != "doctor":
         raise HTTPException(403, "의사만 수정할 수 있습니다.")
     
-    patient = await admin_db.patients.find_one(
-        {"patientId": noteIn.patientId},
-        projection={"_id": 1},
-    )
+    # Check if patient exists
+    query = select(Patient).where(Patient.patient_id == note_in.patientId)
+    result = await db.execute(query)
+    patient = result.scalar_one_or_none()
 
     if not patient:
         raise HTTPException(status_code=404, detail="환자 정보가 존재하지 않습니다.")
     
-    set_ops: Dict[str, Any] = {}
-    if noteIn.title is not None:
-        set_ops["title"] = noteIn.title
-    if noteIn.content is not None:
-        set_ops["content"] = noteIn.content
-    if noteIn.noteType is not None:
-        set_ops["noteType"] = noteIn.noteType
+    # Get the note with relationships
+    note_query = select(Note).options(
+        selectinload(Note.doctor),
+        selectinload(Note.patient)
+    ).where(and_(Note.note_id == note_id, Note.deleted == False))
+    note_result = await db.execute(note_query)
+    note = note_result.scalar_one_or_none()
+    
+    if not note:
+        raise HTTPException(status_code=404, detail="노트를 찾을 수 없습니다.")
+    
+    # Check if there's anything to update
+    has_updates = False
+    if note_in.title is not None:
+        note.title = note_in.title
+        has_updates = True
+    if note_in.content is not None:
+        note.content = note_in.content
+        has_updates = True
+    if note_in.noteType is not None:
+        note.note_type = note_in.noteType
+        has_updates = True
 
-    if not set_ops:
+    if not has_updates:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="수정할 내용이 없습니다.",
         )
 
-    set_ops["lastModified"] = datetime.utcnow()
+    note.last_modified = datetime.utcnow()
+    
+    await db.commit()
 
-    update_doc: Dict[str, Any] = {
-        "$set": set_ops, 
-        "$push": {"doctorId": str(doctorInfo.get("_id"))},
+    # Convert note to dict for response
+    note_dict = {
+        "id": note.note_id,
+        "patientId": note.patient.patient_id,  # Get patient_id from relationship
+        "doctorId": [note.doctor.user_id],  # Get doctor ID from relationship, keep as list for API compatibility
+        "title": note.title,
+        "content": note.content,
+        "noteType": note.note_type,
+        "createdAt": note.created_at,
+        "lastModified": note.last_modified,
+        "deleted": note.deleted
     }
 
-    update_result = await data_db.notes.update_one(
-        {"_id": str(noteId), "deleted": False},
-        update_doc,
-    )
-
-    updated_note = await data_db.notes.find_one({"_id": str(noteId)})
-
-    return {"success": True, "note": updated_note}
+    return {"success": True, "note": to_serializable(note_dict)}
 
 async def get_all_notes(
-    patientId: str,
-    doctorInfo: Dict,
+    patient_id: str,
+    current_user: User,
+    db: AsyncSession,
 ):
-    if doctorInfo["position"] != "doctor":
+    if current_user.position != "doctor":
         raise HTTPException(403, "의사만 노트를 조회할 수 있습니다.")
 
-    patient_exists = await admin_db.patients.find_one(
-        {"patientId": patientId}, {"_id": 1}
-    )
-    if not patient_exists:
+    # Check if patient exists
+    query = select(Patient).where(Patient.patient_id == patient_id)
+    result = await db.execute(query)
+    patient = result.scalar_one_or_none()
+    
+    if not patient:
         raise HTTPException(404, "환자 정보가 없습니다.")
     
-    cursor = data_db.notes.find(
-        {"patientId": patientId, "deleted": False}
-    ).sort("lastModified", -1)
+    # Get all notes for this patient using foreign key relationship
+    notes_query = select(Note).options(
+        selectinload(Note.doctor),
+        selectinload(Note.patient)
+    ).where(
+        and_(Note.patient_id == patient.patient_id, Note.deleted == False)
+    ).order_by(Note.last_modified.desc())
+    
+    notes_result = await db.execute(notes_query)
+    notes = notes_result.scalars().all()
 
-    notes = await cursor.to_list(length=None)
+    # Convert notes to dict format
+    note_dicts = []
+    for note in notes:
+        note_dict = {
+            "id": note.note_id,
+            "patientId": note.patient.patient_id,  # Get string patient_id from relationship
+            "doctorId": [note.doctor.user_id],  # Keep as list for API compatibility
+            "title": note.title,
+            "content": note.content,
+            "noteType": note.note_type,
+            "createdAt": note.created_at,
+            "lastModified": note.last_modified,
+            "deleted": note.deleted
+        }
+        note_dicts.append(to_serializable(note_dict))
 
-    return {"success": True, "notes": notes}
+    return {"success": True, "notes": note_dicts}
 
 async def get_specific_note(
-    noteId: str,
-    doctorInfo: Dict,
+    note_id: str,  # Keep as string
+    current_user: User,
+    db: AsyncSession,
 ):
-    if doctorInfo.get("position") != "doctor":
+    if current_user.position != "doctor":
         raise HTTPException(403, "의사만 노트를 조회할 수 있습니다.")
     
-    note = await data_db.notes.find_one(
-        {"_id": str(noteId), "deleted": False}
-    )
+    # Get the note with relationships
+    query = select(Note).options(
+        selectinload(Note.doctor),
+        selectinload(Note.patient)
+    ).where(and_(Note.note_id == note_id, Note.deleted == False))
+    result = await db.execute(query)
+    note = result.scalar_one_or_none()
 
     if not note:
         raise HTTPException(404, "노트를 찾을 수 없습니다.")
 
-    return {"success": True, "note": note}
+    # Convert note to dict for response
+    note_dict = {
+        "id": note.note_id,
+        "patientId": note.patient.patient_id,  # Get string patient_id from relationship
+        "doctorId": [note.doctor.user_id],  # Keep as list for API compatibility
+        "title": note.title,
+        "content": note.content,
+        "noteType": note.note_type,
+        "createdAt": note.created_at,
+        "lastModified": note.last_modified,
+        "deleted": note.deleted
+    }
+
+    return {"success": True, "note": to_serializable(note_dict)}
