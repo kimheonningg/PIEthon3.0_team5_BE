@@ -21,13 +21,13 @@ async def get_patients(
     result = await get_all_assigned_patients(current_user, db)
     return result
 
-@router.get("/{patient_id}")  # get specific patient with patient id
+@router.get("/{patient_mrn}")  # get specific patient with patient id
 async def get_patient(
-    patient_id: str,
+    patient_mrn: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await get_specific_patient(patient_id, current_user, db)
+    result = await get_specific_patient(patient_mrn, current_user, db)
     return result
 
 @router.post("/create")
@@ -35,11 +35,11 @@ async def create_patient(patient_info: Patient, db: AsyncSession = Depends(get_d
     success = await create_new_patient(patient_info, db)
     return success
 
-@router.post("/assign/{patient_id}")
+@router.post("/assign/{patient_mrn}")
 async def assign_patient(
-    patient_id: str,
+    patient_mrn: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await assign_patient_to_doctor(patient_id, current_user, db)
+    result = await assign_patient_to_doctor(patient_mrn, current_user, db)
     return result

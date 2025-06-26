@@ -19,7 +19,7 @@ class CreateNoteForm(BaseModel):
 
 
 class UpdateNoteForm(BaseModel):
-    patient_id: str
+    patient_mrn: str
     title: Optional[str] = None
     content: Optional[str] = None
     note_type: Optional[MedicalNoteType] = None
@@ -30,7 +30,7 @@ class UpdateNoteForm(BaseModel):
     )
 
 class NoteForm(BaseModel):
-    patient_id: str
+    patient_mrn: str
     doctor_id: List[str] # multiple doctors can add or edit notes
     created_at: datetime
     last_modified: datetime

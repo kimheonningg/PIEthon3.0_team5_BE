@@ -12,7 +12,7 @@ from app.core.db import User, Patient, Note
 from app.utils.utils import to_serializable
 
 async def add_new_note(
-    patient_id: str,
+    patient_mrn: str,
     note_in: CreateNoteForm,
     current_user: User,
     db: AsyncSession,
@@ -21,7 +21,7 @@ async def add_new_note(
         raise HTTPException(403, "의사만 환자 노트를 만들 수 있습니다.")
         
     # Check if patient exists and load with relationships
-    query = select(Patient).options(selectinload(Patient.doctors)).where(Patient.patient_id == patient_id)
+    query = select(Patient).options(selectinload(Patient.doctors)).where(Patient.patient_mrn == patient_mrn)
     result = await db.execute(query)
     patient = result.scalar_one_or_none()
     
@@ -32,7 +32,7 @@ async def add_new_note(
     note_id = str(ObjectId())  # Generate unique note ID
     note = Note(
         note_id=note_id,
-        patient_id=patient.patient_id,
+        patient_mrn=patient.patient_mrn,
         doctor_id=current_user.user_id,
         title=note_in.title,
         content=note_in.content,
@@ -52,7 +52,7 @@ async def add_new_note(
         # Convert note to dict for response
         note_dict = {
             "id": note.note_id,
-            "patient_id": patient_id,  # Return the string patient_id for API compatibility
+            "patient_mrn": patient_mrn,  # Return the string patient_mrn for API compatibility
             "doctor_id": [current_user.user_id],  # Keep as list for API compatibility
             "title": note.title,
             "content": note.content,
@@ -81,7 +81,7 @@ async def update_existing_note(
         raise HTTPException(403, "의사만 수정할 수 있습니다.")
     
     # Check if patient exists
-    query = select(Patient).where(Patient.patient_id == note_in.patient_id)
+    query = select(Patient).where(Patient.patient_mrn == note_in.patient_mrn)
     result = await db.execute(query)
     patient = result.scalar_one_or_none()
 
@@ -124,7 +124,7 @@ async def update_existing_note(
     # Convert note to dict for response
     note_dict = {
         "id": note.note_id,
-        "patient_id": note.patient.patient_id,  # Get patient_id from relationship
+        "patient_mrn": note.patient.patient_mrn,  # Get patient_mrn from relationship
         "doctor_id": [note.doctor.user_id],  # Get doctor ID from relationship, keep as list for API compatibility
         "title": note.title,
         "content": note.content,
@@ -137,7 +137,7 @@ async def update_existing_note(
     return {"success": True, "note": to_serializable(note_dict)}
 
 async def get_all_notes(
-    patient_id: str,
+    patient_mrn: str,
     current_user: User,
     db: AsyncSession,
 ):
@@ -145,7 +145,7 @@ async def get_all_notes(
         raise HTTPException(403, "의사만 노트를 조회할 수 있습니다.")
 
     # Check if patient exists
-    query = select(Patient).where(Patient.patient_id == patient_id)
+    query = select(Patient).where(Patient.patient_mrn == patient_mrn)
     result = await db.execute(query)
     patient = result.scalar_one_or_none()
     
@@ -157,7 +157,7 @@ async def get_all_notes(
         selectinload(Note.doctor),
         selectinload(Note.patient)
     ).where(
-        and_(Note.patient_id == patient.patient_id, Note.deleted == False)
+        and_(Note.patient_mrn == patient.patient_mrn, Note.deleted == False)
     ).order_by(Note.last_modified.desc())
     
     notes_result = await db.execute(notes_query)
@@ -168,7 +168,7 @@ async def get_all_notes(
     for note in notes:
         note_dict = {
             "id": note.note_id,
-            "patient_id": note.patient.patient_id,  # Get string patient_id from relationship
+            "patient_mrn": note.patient.patient_mrn,  # Get string patient_mrn from relationship
             "doctor_id": [note.doctor.user_id],  # Keep as list for API compatibility
             "title": note.title,
             "content": note.content,
@@ -203,7 +203,7 @@ async def get_specific_note(
     # Convert note to dict for response
     note_dict = {
         "id": note.note_id,
-        "patient_id": note.patient.patient_id,  # Get string patient_id from relationship
+        "patient_mrn": note.patient.patient_mrn,  # Get string patient_mrn from relationship
         "doctor_id": [note.doctor.user_id],  # Keep as list for API compatibility
         "title": note.title,
         "content": note.content,

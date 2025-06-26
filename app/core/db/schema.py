@@ -11,7 +11,7 @@ doctor_patient_association = Table(
     'doctor_patient',
     Base.metadata,
     Column('doctor_id', String(50), ForeignKey('users.user_id'), primary_key=True),
-    Column('patient_id', String(50), ForeignKey('patients.patient_id'), primary_key=True)
+    Column('patient_mrn', String(50), ForeignKey('patients.patient_mrn'), primary_key=True)
 )
 
 class User(Base):
@@ -38,12 +38,15 @@ class User(Base):
 class Patient(Base):
     __tablename__ = 'patients'
     
-    patient_id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    patient_mrn: Mapped[str] = mapped_column(String(50), primary_key=True)
     phone_num: Mapped[str] = mapped_column(String(11), nullable=False)
     first_name: Mapped[str] = mapped_column(String(40), nullable=False)
     last_name: Mapped[str] = mapped_column(String(40), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    
+    age: Mapped[int] = mapped_column(Integer, nullable=False)
+    body_part: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    ai_ready: Mapped[bool] = mapped_column(Boolean, default=True)
+
     # Relationships
     doctors: Mapped[List["User"]] = relationship(
         "User", 
@@ -64,7 +67,7 @@ class Note(Base):
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     
     # Foreign keys - reference string IDs
-    patient_id: Mapped[str] = mapped_column(String(50), ForeignKey('patients.patient_id'), nullable=False)
+    patient_mrn: Mapped[str] = mapped_column(String(50), ForeignKey('patients.patient_mrn'), nullable=False)
     doctor_id: Mapped[str] = mapped_column(String(50), ForeignKey('users.user_id'), nullable=False)
     
     # Relationships
