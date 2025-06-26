@@ -13,14 +13,14 @@ from app.core.db import get_db, User
 
 router = APIRouter()
 
-@router.post("/create/{patient_id}")
+@router.post("/create/{patient_mrn}")
 async def create_note(
-    patient_id: str,
+    patient_mrn: str,
     note_in: CreateNoteForm,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await add_new_note(patient_id, note_in, current_user, db)
+    result = await add_new_note(patient_mrn, note_in, current_user, db)
     return result
     
 @router.post("/update/{note_id}")
@@ -33,13 +33,13 @@ async def update_note(
     result = await update_existing_note(note_id, note_in, current_user, db)
     return result
 
-@router.get("/all/{patient_id}")  # get all notes for that patient with patient_id
+@router.get("/all/{patient_mrn}")  # get all notes for that patient with patient_mrn
 async def get_notes(
-    patient_id: str,
+    patient_mrn: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await get_all_notes(patient_id, current_user, db)
+    result = await get_all_notes(patient_mrn, current_user, db)
     return result
 
 @router.get("/{note_id}")  # get specific note with note_id

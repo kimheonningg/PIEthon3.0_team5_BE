@@ -38,6 +38,7 @@ sh setup.sh
 ```
 
 The setup script will:
+
 - Install Python dependencies from `requirements.txt`
 - Start PostgreSQL and pgAdmin containers via Docker
 - Run database migrations with Alembic
@@ -46,6 +47,7 @@ The setup script will:
 ### 3. pgAdmin Setup (Optional)
 
 Access pgAdmin web interface:
+
 1. Open http://localhost:8888 in your browser
 2. Login with:
    - Email: `admin@example.com`
@@ -112,6 +114,7 @@ PIEthon3.0_team5_BE/
 ## Database Schema
 
 ### Users (Doctors)
+
 - `user_id` (Primary Key): Doctor's unique identifier
 - `email`: Doctor's email address
 - `licence_num`: Medical license number
@@ -119,13 +122,15 @@ PIEthon3.0_team5_BE/
 - `password`: Hashed password
 
 ### Patients
-- `patient_id` (Primary Key): Patient's unique identifier
+
+- `patient_mrn` (Primary Key): Patient's unique identifier
 - `phone_num`, `first_name`, `last_name`: Personal information
 - Many-to-many relationship with doctors
 
 ### Notes (Medical Records)
+
 - `note_id` (Primary Key): Note's unique identifier
-- `patient_id` (Foreign Key): References patient
+- `patient_mrn` (Foreign Key): References patient
 - `doctor_id` (Foreign Key): References doctor
 - `title`, `content`: Note information
 - `note_type`: Category of medical note

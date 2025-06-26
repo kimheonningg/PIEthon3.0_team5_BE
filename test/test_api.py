@@ -70,14 +70,14 @@ class APITester:
                     doctor_patient_association.c.doctor_id.like("testdoctor%")
                 ))
                 await db.execute(delete(doctor_patient_association).where(
-                    doctor_patient_association.c.patient_id == "P12345"
+                    doctor_patient_association.c.patient_mrn == "P12345"
                 ))
                 
                 # Delete test notes (references patient and doctor)
-                await db.execute(delete(Note).where(Note.patient_id == "P12345"))
+                await db.execute(delete(Note).where(Note.patient_mrn == "P12345"))
                 
                 # Delete test patient data  
-                await db.execute(delete(Patient).where(Patient.patient_id == "P12345"))
+                await db.execute(delete(Patient).where(Patient.patient_mrn == "P12345"))
                 
                 # Delete test user data (last, since others reference it)
                 await db.execute(delete(User).where(User.user_id.like("testdoctor%")))
@@ -196,11 +196,14 @@ class APITester:
         print("🔍 Testing patient creation...")
         patient_data = {
             "phone_num": "01087654321",
-            "patient_id": "P12345",
+            "patient_mrn": "P12345",
             "name": {
                 "first_name": "Jane",
                 "last_name": "Smith"
-            }
+            },
+            "age": 42,
+            "body_part": ["brain"],
+            "ai_ready": True
         }
         
         response = await client.post(f"{BASE_URL}/patients/create", json=patient_data)
@@ -245,7 +248,7 @@ class APITester:
         data = response.json()
         assert data["success"] == True
         assert "patient" in data
-        assert data["patient"]["patient_id"] == "P12345"
+        assert data["patient"]["patient_mrn"] == "P12345"
         print("✅ Get specific patient passed")
 
     async def test_10_create_note(self, client):
@@ -301,7 +304,7 @@ class APITester:
         """Test note update."""
         print("🔍 Testing note update...")
         update_data = {
-            "patient_id": "P12345",
+            "patient_mrn": "P12345",
             "title": "Updated Medical Note",
             "content": "Updated content with new findings",
             "note_type": "radiology"
