@@ -77,6 +77,12 @@ async def change_pw(user_info: ChangePwForm, db: AsyncSession = Depends(get_db))
     success = await change_password(user_info, db)
     return success
 
+@app.get("/user_info") # get user info of the specific user
+async def get_user_info(
+    current_user: User = Depends(get_current_user)
+):
+    return current_user
+
 @app.get("/patients") # get all patients assigned to the current doctor
 async def get_patients(
     current_user: User = Depends(get_current_user),
