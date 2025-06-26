@@ -10,7 +10,7 @@ MedicalNoteType = Literal["consult", "radiology", "surgery", "other"] # TODO
 class CreateNoteForm(BaseModel):
     title: str
     content: str
-    noteType: MedicalNoteType = "other"
+    note_type: MedicalNoteType = "other"
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -19,10 +19,10 @@ class CreateNoteForm(BaseModel):
 
 
 class UpdateNoteForm(BaseModel):
-    patientId: str
+    patient_id: str
     title: Optional[str] = None
     content: Optional[str] = None
-    noteType: Optional[MedicalNoteType] = None
+    note_type: Optional[MedicalNoteType] = None
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -30,13 +30,13 @@ class UpdateNoteForm(BaseModel):
     )
 
 class NoteForm(BaseModel):
-    patientId: str
-    doctorId: List[str] # multiple doctors can add or edit notes
-    createdAt: datetime
-    lastModified: datetime
+    patient_id: str
+    doctor_id: List[str] # multiple doctors can add or edit notes
+    created_at: datetime
+    last_modified: datetime
     title: str
     content: str
-    noteType: MedicalNoteType
+    note_type: MedicalNoteType
     deleted: bool
 
     model_config = ConfigDict(

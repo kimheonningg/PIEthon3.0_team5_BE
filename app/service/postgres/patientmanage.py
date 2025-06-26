@@ -6,9 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from core.db import User, Patient
-from core.models.patient import Patient as PatientModel
-from core.utils import to_serializable
+from app.core.db import User, Patient
+from app.dto.patient import Patient as PatientModel
+from app.utils.utils import to_serializable
 
 async def _get_patient(patient_id: str, db: AsyncSession) -> Optional[Patient]:
     query = select(Patient).where(Patient.patient_id == patient_id)
@@ -18,10 +18,10 @@ async def _get_patient(patient_id: str, db: AsyncSession) -> Optional[Patient]:
 async def create_new_patient(patient_info: PatientModel, db: AsyncSession):
     try:
         patient = Patient(
-            patient_id=patient_info.patientId,
-            phone_num=patient_info.phoneNum,
-            first_name=patient_info.name.firstName,
-            last_name=patient_info.name.lastName
+            patient_id=patient_info.patient_id,
+            phone_num=patient_info.phone_num,
+            first_name=patient_info.name.first_name,
+            last_name=patient_info.name.last_name
         )
         db.add(patient)
         await db.commit()
@@ -79,15 +79,15 @@ async def get_all_assigned_patients(current_user: User, db: AsyncSession):
         doctor_ids = [doctor.user_id for doctor in patient.doctors]
         
         patient_dict = {
-            "patientId": patient.patient_id,
-            "phoneNum": patient.phone_num,
+            "patient_id": patient.patient_id,
+            "phone_num": patient.phone_num,
             "name": {
-                "firstName": patient.first_name,
-                "lastName": patient.last_name
+                "first_name": patient.first_name,
+                "last_name": patient.last_name
             },
-            "doctorId": doctor_ids,
-            "medicalNotes": [],  # Will be populated from notes relationship if needed
-            "createdAt": patient.created_at
+            "doctor_id": doctor_ids,
+            "medical_notes": [],  # Will be populated from notes relationship if needed
+            "created_at": patient.created_at
         }
         patient_dicts.append(to_serializable(patient_dict))
 
@@ -119,15 +119,15 @@ async def get_specific_patient(patient_id: str, current_user: User, db: AsyncSes
     doctor_ids = [doctor.user_id for doctor in patient.doctors]
 
     patient_dict = {
-        "patientId": patient.patient_id,
-        "phoneNum": patient.phone_num,
+        "patient_id": patient.patient_id,
+        "phone_num": patient.phone_num,
         "name": {
-            "firstName": patient.first_name,
-            "lastName": patient.last_name
+            "first_name": patient.first_name,
+            "last_name": patient.last_name
         },
-        "doctorId": doctor_ids,
-        "medicalNotes": [],  # Will be populated from notes relationship if needed
-        "createdAt": patient.created_at
+        "doctor_id": doctor_ids,
+        "medical_notes": [],  # Will be populated from notes relationship if needed
+        "created_at": patient.created_at
     }
 
     return {"success": True, "patient": to_serializable(patient_dict)}

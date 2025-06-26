@@ -9,11 +9,11 @@ from typing import Any, Dict, Optional
 from jose import jwt, JWTError
 
 from config import get_settings
-from core.models.registerform import RegisterForm
-from core.models.loginform import LoginForm
-from core.models.findidform import FindIdForm
-from core.models.changepwform import ChangePwForm
-from core.db import User, get_db
+from app.dto.registerform import RegisterForm
+from app.dto.loginform import LoginForm
+from app.dto.findidform import FindIdForm
+from app.dto.changepwform import ChangePwForm
+from app.core.db import User, get_db
 
 settings = get_settings()
 SECRET_KEY: str = settings.secret_key
@@ -38,16 +38,16 @@ def _create_access_token(
 
 async def authenticate_user(payload: LoginForm, db: AsyncSession):
     query = select(User)
-    if payload.userId and payload.phoneNum:
-        query = query.where(or_(User.user_id == payload.userId, User.phone_num == payload.phoneNum))
-    elif payload.userId:
-        query = query.where(User.user_id == payload.userId)
-    elif payload.phoneNum:
-        query = query.where(User.phone_num == payload.phoneNum)
+    if payload.user_id and payload.phone_num:
+        query = query.where(or_(User.user_id == payload.user_id, User.phone_num == payload.phone_num))
+    elif payload.user_id:
+        query = query.where(User.user_id == payload.user_id)
+    elif payload.phone_num:
+        query = query.where(User.phone_num == payload.phone_num)
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Either userId or phoneNum must be provided."
+            detail="Either user_id or phone_num must be provided."
         )
     
     result = await db.execute(query)
@@ -69,14 +69,14 @@ async def authenticate_user(payload: LoginForm, db: AsyncSession):
 
 async def register_user(payload: RegisterForm, db: AsyncSession) -> int:
     user = User(
-        user_id=payload.userId,
+        user_id=payload.user_id,
         email=payload.email,
-        phone_num=payload.phoneNum,
-        first_name=payload.name.firstName,
-        last_name=payload.name.lastName,
+        phone_num=payload.phone_num,
+        first_name=payload.name.first_name,
+        last_name=payload.name.last_name,
         password=hash_password(payload.password),
         position=payload.position,
-        licence_num=payload.licenceNum
+        licence_num=payload.licence_num
     )
 
     try:
@@ -121,9 +121,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
 
 async def find_user_id(payload: FindIdForm, db: AsyncSession):
     query = select(User).where(
-        User.first_name == payload.name.firstName,
-        User.last_name == payload.name.lastName,
-        User.phone_num == payload.phoneNum
+        User.first_name == payload.name.first_name,
+        User.last_name == payload.name.last_name,
+        User.phone_num == payload.phone_num
     )
     result = await db.execute(query)
     user = result.scalar_one_or_none()
@@ -134,16 +134,16 @@ async def find_user_id(payload: FindIdForm, db: AsyncSession):
             detail="No user found",
         )
 
-    return {"success": True, "userId": user.user_id}
+    return {"success": True, "user_id": user.user_id}
 
 async def change_password(payload: ChangePwForm, db: AsyncSession):
-    if not payload.userId:
+    if not payload.user_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="UserId is required.",
+            detail="User ID is required.",
         )
     
-    query = select(User).where(User.user_id == payload.userId)
+    query = select(User).where(User.user_id == payload.user_id)
     result = await db.execute(query)
     user = result.scalar_one_or_none()
 
@@ -153,19 +153,19 @@ async def change_password(payload: ChangePwForm, db: AsyncSession):
             detail="User not found.",
         )
 
-    if not pwd_context.verify(payload.originalPw, user.password):
+    if not pwd_context.verify(payload.original_pw, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Current password is incorrect.",
         )
 
-    if pwd_context.verify(payload.newPw, user.password):
+    if pwd_context.verify(payload.new_pw, user.password):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="New password must be different from the current password.",
         )
     
-    user.password = hash_password(payload.newPw)
+    user.password = hash_password(payload.new_pw)
     await db.commit()
 
     return {"success": True}
