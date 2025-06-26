@@ -2,22 +2,23 @@ from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
-from pymongo.errors import DuplicateKeyError
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, or_
 from typing import Any, Dict, Optional
 from jose import jwt, JWTError
-from bson import ObjectId
 
 from config import get_settings
 from core.models.registerform import RegisterForm
 from core.models.loginform import LoginForm
 from core.models.findidform import FindIdForm
 from core.models.changepwform import ChangePwForm
-from core.db import admin_db
+from core.db import User, get_db
 
 settings = get_settings()
 SECRET_KEY: str = settings.secret_key
 ALGORITHM: str = "HS256"
-ACCESS_TOKEN_EXPIRE_TIME = 30 # expires in 30 mins
+ACCESS_TOKEN_EXPIRE_TIME = 30
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
@@ -30,26 +31,27 @@ def _create_access_token(
     data: Dict[str, Any],
     expires_delta: int = ACCESS_TOKEN_EXPIRE_TIME,
 ) -> str:
-    # JWT access token
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=expires_delta)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-async def authenticate_user(payload: LoginForm):
-    or_filters = []
-    if payload.userId:
-        or_filters.append({"userId": payload.userId})
-    if payload.phoneNum:
-        or_filters.append({"phoneNum": payload.phoneNum})
-
-    if not or_filters:
+async def authenticate_user(payload: LoginForm, db: AsyncSession):
+    query = select(User)
+    if payload.userId and payload.phoneNum:
+        query = query.where(or_(User.user_id == payload.userId, User.phone_num == payload.phoneNum))
+    elif payload.userId:
+        query = query.where(User.user_id == payload.userId)
+    elif payload.phoneNum:
+        query = query.where(User.phone_num == payload.phoneNum)
+    else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Either userId or phoneNum must be provided."
         )
     
-    user = await admin_db.users.find_one({"$or": or_filters})
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
 
     if not user:
         raise HTTPException(
@@ -57,7 +59,7 @@ async def authenticate_user(payload: LoginForm):
             detail="User Id or phone number does not exist or invalid password entered."
         )
     
-    if not pwd_context.verify(payload.password, user["password"]):
+    if not pwd_context.verify(payload.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User Id or phone number does not exist or invalid password entered."
@@ -65,34 +67,38 @@ async def authenticate_user(payload: LoginForm):
     
     return user
 
-async def register_user(payload: RegisterForm) -> str:
-    user_doc = payload.model_dump()
-    user_doc["password"] = hash_password(user_doc["password"])
-    user_doc["createdAt"] = datetime.utcnow()
-    if payload.position == 'doctor':
-        user_doc.setdefault("patientList", [])
+async def register_user(payload: RegisterForm, db: AsyncSession) -> int:
+    user = User(
+        user_id=payload.userId,
+        email=payload.email,
+        phone_num=payload.phoneNum,
+        first_name=payload.name.firstName,
+        last_name=payload.name.lastName,
+        password=hash_password(payload.password),
+        position=payload.position,
+        licence_num=payload.licenceNum
+    )
 
     try:
-        result = await admin_db.users.insert_one(user_doc)
-        return str(result.inserted_id)
-    except DuplicateKeyError as e:
-        detail = "Duplicate key: "
-        kp = (e.details or {}).get("keyPattern")
-        if kp:
-            if "userId" in kp:
-                detail = "This ID already exists."
-            elif "email" in kp:
-                detail = "This email is already registered."
-            elif "phoneNum" in kp:
-                detail = "This phone number is already registered."
-            else:
-                detail = "User already registered"
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+        return user.user_id
+    except IntegrityError as e:
+        await db.rollback()
+        error_str = str(e.orig)
+        if "user_id" in error_str:
+            detail = "This ID already exists."
+        elif "email" in error_str:
+            detail = "This email is already registered."
+        elif "phone_num" in error_str:
+            detail = "This phone number is already registered."
         else:
             detail = "User already registered"
 
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail)
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any]:
+async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> User:
     credentials_error = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -106,38 +112,40 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any
     except JWTError:
         raise credentials_error
 
-    user = await admin_db.users.find_one({"_id": ObjectId(user_id)})
+    query = select(User).where(User.user_id == user_id)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
     if user is None:
         raise credentials_error
     return user
 
-async def find_user_id(payload: FindIdForm):
-    user: Optional[Dict[str, Any]] = await admin_db.users.find_one(
-        {
-            "name.firstName": payload.name.firstName,
-            "name.lastName": payload.name.lastName,
-            "phoneNum": payload.phoneNum,
-        },
-        projection={"userId": 1},
+async def find_user_id(payload: FindIdForm, db: AsyncSession):
+    query = select(User).where(
+        User.first_name == payload.name.firstName,
+        User.last_name == payload.name.lastName,
+        User.phone_num == payload.phoneNum
     )
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+    
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No user found",
         )
 
-    return {"success": True, "userId": user["userId"]}
+    return {"success": True, "userId": user.user_id}
 
-async def change_password(payload: ChangePwForm):
+async def change_password(payload: ChangePwForm, db: AsyncSession):
     if not payload.userId:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="UserId is required.",
         )
     
-    user: Optional[Dict[str, Any]] = await admin_db.users.find_one(
-        {"userId": payload.userId}
-    )
+    query = select(User).where(User.user_id == payload.userId)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
 
     if not user:
         raise HTTPException(
@@ -145,27 +153,19 @@ async def change_password(payload: ChangePwForm):
             detail="User not found.",
         )
 
-    if not pwd_context.verify(payload.originalPw, user["password"]):
+    if not pwd_context.verify(payload.originalPw, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Current password is incorrect.",
         )
 
-    if pwd_context.verify(payload.newPw, user["password"]):
+    if pwd_context.verify(payload.newPw, user.password):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="New password must be different from the current password.",
         )
     
-    new_hashed_pw = hash_password(payload.newPw)
-
-    await admin_db.users.update_one(
-        {"_id": user["_id"]},
-        {
-            "$set": {
-                "password": new_hashed_pw,
-            }
-        },
-    )
+    user.password = hash_password(payload.newPw)
+    await db.commit()
 
     return {"success": True}
