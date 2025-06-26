@@ -46,16 +46,16 @@ The setup script will:
 ### 3. pgAdmin Setup (Optional)
 
 Access pgAdmin web interface:
-1. Open http://localhost:5050 in your browser
+1. Open http://localhost:8888 in your browser
 2. Login with:
    - Email: `admin@admin.com`
    - Password: `admin`
 3. Add PostgreSQL server connection:
-   - Host: `postgres` (Docker container name)
+   - Host: `piethon-pg` (Docker container name)
    - Port: `5432`
-   - Database: `piedb`
-   - Username: `pieuser`
-   - Password: `piepassword`
+   - Database: `postgres`
+   - Username: `admin`
+   - Password: `123456`
 
 ### 4. Environment Configuration
 
