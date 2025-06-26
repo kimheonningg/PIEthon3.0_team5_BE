@@ -55,3 +55,8 @@ Connect using MongoDB Compass
 
 - `admin`: contains information of users or people such as `patients`, `users`(or doctors)
 - `data`: contains other medical data such as `notes`(medical notes)
+
+### TODO
+
+- `patientId` -> `patientMRN`으로 변수명 수정
+- patient db 구조 변경
