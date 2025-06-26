@@ -10,7 +10,8 @@ from app.core.auth import (
     authenticate_user,
     _create_access_token,
     find_user_id,
-    change_password
+    change_password,
+    get_current_user
 )
 from app.core.db import get_db, User
 
