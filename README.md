@@ -154,3 +154,11 @@ If you encounter issues:
 2. **Migration errors**: Try `alembic downgrade base` then `alembic upgrade head`
 3. **Permission errors**: Run `chmod +x setup.sh` before executing
 4. **Port conflicts**: Check if ports 5432, 5050, or 8000 are already in use
+
+- `admin`: contains information of users or people such as `patients`, `users`(or doctors)
+- `data`: contains other medical data such as `notes`(medical notes)
+
+### TODO
+
+- `patientId` -> `patientMRN`으로 변수명 수정
+- patient db 구조 변경
