@@ -135,6 +135,14 @@ PIEthon3.0_team5_BE/
 - `title`, `content`: Note information
 - `note_type`: Category of medical note
 
+### Appointments
+
+- `appointment_id` (Primary Key): Appointment's unique identifier
+- `patient_mrn`: (Foreign Key): Tells which patient has an appointment scheduled
+- `doctor_id`: (Foreign Key): Tells which doctor is seeing the patient
+- `appointment_detail`: Specific info about the appointment
+- `start_time`, `finish_time`: Tells when the appointment is scheduled
+
 ## Key Features
 
 - 🔐 **JWT Authentication**: Secure doctor login system

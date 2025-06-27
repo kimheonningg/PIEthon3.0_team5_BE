@@ -2,6 +2,7 @@ from fastapi import FastAPI, APIRouter
 from .auth import router as auth_router
 from .patients import router as patients_router
 from .notes import router as notes_router
+from .appointments import router as appointments_router
 
 def init_routers(app_: FastAPI) -> None:
     router = APIRouter()
@@ -9,6 +10,7 @@ def init_routers(app_: FastAPI) -> None:
     router.include_router(auth_router, prefix="/auth", tags=["auth"])
     router.include_router(patients_router, prefix="/patients", tags=["patients"])
     router.include_router(notes_router, prefix="/notes", tags=["notes"])
+    router.include_router(appointments_router, prefix='/appointments', tags=["appointments"])
     
     app_.include_router(router)
     
