@@ -28,3 +28,33 @@ async def create_new_appointment(
         await db.rollback()
         print(f"[create_new_appointment error] {e}")
         return {"success": False, "error": str(e)}
+
+async def get_all_appointments (doctor_info: User, db: AsyncSession): # get all appointments assigned to the doctor
+    try:
+        result = await db.execute(
+            select(Appointment)
+            .options(selectinload(Appointment.patient))
+            .where(Appointment.doctor_id == doctor_info.user_id)
+        )
+        appointments = result.scalars().all()
+
+        serialized = []
+        for appt in appointments:
+            serialized.append({
+                "appointment_id": appt.appointment_id,
+                "appointment_detail": appt.appointment_detail,
+                "start_time": appt.start_time.isoformat(),
+                "finish_time": appt.finish_time.isoformat(),
+                "patient": {
+                    "patient_mrn": appt.patient.patient_mrn,
+                    "first_name": appt.patient.first_name,
+                    "last_name": appt.patient.last_name,
+                    "age": appt.patient.age,
+                    "phone_num": appt.patient.phone_num,
+                }
+            })
+
+        return {"success": True, "appointments": serialized}
+    except Exception as e:
+        print(f"[get_all_appointments error] {e}")
+        return {"success": False, "error": str(e)}
