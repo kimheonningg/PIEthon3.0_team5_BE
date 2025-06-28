@@ -48,8 +48,10 @@ class Patient(Base):
     last_name: Mapped[str] = mapped_column(String(40), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     age: Mapped[int] = mapped_column(Integer, nullable=False)
+    birthdate: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     body_part: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     ai_ready: Mapped[bool] = mapped_column(Boolean, default=True)
+    gender: Mapped[bool] = mapped_column(String(20), nullable=False) # only allow female / male
 
     # Relationships
     doctors: Mapped[List["User"]] = relationship(

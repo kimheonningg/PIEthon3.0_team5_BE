@@ -1,6 +1,7 @@
 from pydantic import BaseModel, constr, ConfigDict
 from typing import List, Optional
 from bson import ObjectId
+from datetime import datetime
 
 from .registerform import Name
 
@@ -11,9 +12,10 @@ class Patient(BaseModel):
     name: Name
     medical_notes: Optional[List[str]] = None # only store note object ids
     age: int
+    birthdate: datetime
     body_part: Optional[List[str]] = None
     ai_ready: bool = True
-
+    gender: str # only female / male are allowed
     
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
