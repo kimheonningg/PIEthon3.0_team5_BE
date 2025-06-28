@@ -1,0 +1,99 @@
+{
+  "image_info": {
+    "filename": "Unknown",
+    "data_shape": [
+      240,
+      240,
+      155
+    ],
+    "data_dtype": "int16",
+    "ndim": 3,
+    "voxel_sizes": [
+      "1.0",
+      "1.0",
+      "1.0"
+    ],
+    "voxel_units": "mm",
+    "time_units": "unknown"
+  },
+  "spatial_info": {
+    "affine_matrix": [
+      [
+        -1.0,
+        -0.0,
+        -0.0,
+        0.0
+      ],
+      [
+        -0.0,
+        -1.0,
+        -0.0,
+        239.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "qform_code": 1,
+    "sform_code": 1,
+    "pixdim": [
+      "1.0",
+      "1.0",
+      "1.0",
+      "1.0",
+      "0.0",
+      "0.0",
+      "0.0",
+      "0.0"
+    ],
+    "orientation": [
+      "L",
+      "P",
+      "S"
+    ]
+  },
+  "header_info": {
+    "sizeof_hdr": 348,
+    "data_type": 4,
+    "bitpix": 16,
+    "slice_start": 0,
+    "slice_end": 0,
+    "slice_duration": 0.0,
+    "toffset": 0.0
+  },
+  "intensity_info": {
+    "scl_slope": NaN,
+    "scl_inter": NaN,
+    "cal_max": 0.0,
+    "cal_min": 0.0,
+    "glmax": 0,
+    "glmin": 0
+  },
+  "description_info": {
+    "descrip": "",
+    "aux_file": "",
+    "intent_name": "",
+    "intent_code": 0
+  },
+  "statistics": {
+    "min_value": 0.0,
+    "max_value": 625.0,
+    "mean_value": 26.021915994623654,
+    "std_value": 66.76537214744384,
+    "non_zero_voxels": 1342885,
+    "total_voxels": 8928000
+  },
+  "processing_info": {
+    "processed_at": "2025-06-28T17:00:55.087874",
+    "nibabel_version": "5.3.2"
+  }
+}

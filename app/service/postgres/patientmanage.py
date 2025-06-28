@@ -23,8 +23,10 @@ async def create_new_patient(patient_info: PatientModel, db: AsyncSession):
             first_name=patient_info.name.first_name,
             last_name=patient_info.name.last_name,
             age=patient_info.age,
+            birthdate=patient_info.birthdate,
             body_part=", ".join(patient_info.body_part) if patient_info.body_part else None,
-            ai_ready=patient_info.ai_ready
+            ai_ready=patient_info.ai_ready,
+            gender=patient_info.gender
         )
         db.add(patient)
         await db.commit()
@@ -100,7 +102,9 @@ async def get_all_assigned_patients(current_user: User, db: AsyncSession):
             "created_at": patient.created_at,
             "age": patient.age,
             "body_part": patient.body_part,
-            "ai_ready": patient.ai_ready
+            "ai_ready": patient.ai_ready,
+            "gender": patient.gender,
+            "birthdate": patient.birthdate
         }
         patient_dicts.append(to_serializable(patient_dict))
 
@@ -148,8 +152,10 @@ async def get_specific_patient(patient_mrn: str, current_user: User, db: AsyncSe
         "medical_notes": [],  # Will be populated from notes relationship if needed
         "created_at": patient.created_at,
         "age": patient.age,
+        "birthdate": patient.birthdate,
         "body_part": patient.body_part,
-        "ai_ready": patient.ai_ready
+        "ai_ready": patient.ai_ready,
+        "gender": patient.gender
     }
 
     return {"success": True, "patient": to_serializable(patient_dict)}

@@ -6,3 +6,6 @@ class Examination(BaseModel):
     examination_title: str
     examination_date: datetime
     patient_mrn: str
+
+    class Config:
+        from_attributes = True  
