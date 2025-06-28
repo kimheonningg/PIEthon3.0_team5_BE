@@ -1,7 +1,6 @@
 from typing import List, Dict, Any, Optional, Union, Literal
 from pydantic import BaseModel, Field
 from uuid import UUID
-from app.core.agent.models import LLMMessage
 
 class ChatToolCall(BaseModel):
     """Tool call in a chat response."""
@@ -32,9 +31,7 @@ class ChatMessage(BaseModel):
 # Updated chat request with conversation support
 class ChatRequest(BaseModel):
     """Request for the chat endpoint."""
-    messages: List[LLMMessage]
-    stream: bool = False
-    system: Optional[str] = None
+    query: str = Field(..., description="User's query/question")
     patient_mrn: str = Field(..., description="MRN of the patient")
     conversation_id: Optional[str] = Field(None, description="Conversation ID (creates new if None)")
 

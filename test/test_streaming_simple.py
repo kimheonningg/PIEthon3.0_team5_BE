@@ -162,17 +162,8 @@ class SimpleStreamingTester:
         
         # Query that should trigger medical record tools and web search
         chat_data = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [{
-                        "type": "text", 
-                        "text": "Can you review Jane's recent medical records including any lab results and notes? Also search for current hypertension treatment guidelines."
-                    }]
-                }
-            ],
-            "patient_mrn": self.test_patient_mrn,
-            "system": "You are a medical AI assistant. Always check patient medical records first, then use web search for external guidelines if needed. Cite all sources with reference IDs."
+            "query": "Can you review Jane's recent medical records including any lab results and notes? Also search for current hypertension treatment guidelines.",
+            "patient_mrn": self.test_patient_mrn
         }
         
         chunk_count = 0
@@ -186,7 +177,7 @@ class SimpleStreamingTester:
         
         with open(self.stream_log_file, 'w', encoding='utf-8') as log_file:
             log_file.write(f"SIMPLE STREAMING TEST LOG - {datetime.now().isoformat()}\n")
-            log_file.write(f"Question: {chat_data['messages'][0]['content'][0]['text']}\n")
+            log_file.write(f"Question: {chat_data['query']}\n")
             log_file.write(f"Patient MRN: {self.test_patient_mrn}\n")
             log_file.write("=" * 80 + "\n\n")
             

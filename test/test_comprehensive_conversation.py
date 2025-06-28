@@ -272,14 +272,8 @@ class ComprehensiveConversationTester:
             
             # Prepare chat data
             chat_data = {
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": [{"type": "text", "text": turn_data["query"]}]
-                    }
-                ],
-                "patient_mrn": self.test_patient_mrn,
-                "system": "You are a medical AI assistant. Always check patient medical records and cite all sources with their reference IDs. Use external web search for general medical guidelines when requested."
+                "query": turn_data["query"],
+                "patient_mrn": self.test_patient_mrn
             }
             
             # Add conversation_id for subsequent turns

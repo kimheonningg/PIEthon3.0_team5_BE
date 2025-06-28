@@ -140,33 +140,29 @@ async def chat(
                 elif msg.role == "assistant":
                     langchain_messages.append(SystemMessage(content=msg.content))
         
-        # Add current messages from request
-        langchain_messages.extend(convert_to_langchain_messages(request.messages))
+        # Add current user query to messages
+        langchain_messages.append(HumanMessage(content=request.query))
         
-        # If no conversation_id, create new conversation from first user message
-        if not conversation_id and request.messages:
-            first_user_msg = next((msg for msg in request.messages if msg.role == "user"), None)
-            if first_user_msg:
-                title = service.generate_title_from_message(first_user_msg.content[0].text)
-                conversation_id = await service.create_conversation(
-                    doctor_id=current_user.user_id,
-                    patient_mrn=request.patient_mrn,
-                    title=title
-                )
+        # If no conversation_id, create new conversation from query
+        if not conversation_id:
+            title = service.generate_title_from_message(request.query)
+            conversation_id = await service.create_conversation(
+                doctor_id=current_user.user_id,
+                patient_mrn=request.patient_mrn,
+                title=title
+            )
         
-        # Save new messages to conversation
+        # Save user query to conversation
         if conversation_id:
-            for msg in request.messages:
-                await service.add_message_to_conversation(
-                    conversation_id=conversation_id,
-                    role=msg.role,
-                    content=msg.content[0].text if msg.role == "user" else str(msg.content)
-                )
+            await service.add_message_to_conversation(
+                conversation_id=conversation_id,
+                role="user",
+                content=request.query
+            )
         
         # Create tools and config
         tools = create_tools_with_user_context(db, current_user, request.patient_mrn)
         config = {
-            "system": getattr(request, 'system', None),
             "tools": tools,
             "user_id": str(current_user.user_id),
             "patient_mrn": request.patient_mrn
@@ -251,32 +247,29 @@ async def chat_stream(
                 elif msg.role == "assistant":
                     langchain_messages.append(SystemMessage(content=msg.content))
         
-        langchain_messages.extend(convert_to_langchain_messages(request.messages))
+        # Add current user query to messages
+        langchain_messages.append(HumanMessage(content=request.query))
         
         # Create conversation if needed
-        if not conversation_id and request.messages:
-            first_user_msg = next((msg for msg in request.messages if msg.role == "user"), None)
-            if first_user_msg:
-                title = service.generate_title_from_message(first_user_msg.content[0].text)
-                conversation_id = await service.create_conversation(
-                    doctor_id=current_user.user_id,
-                    patient_mrn=request.patient_mrn,
-                    title=title
-                )
+        if not conversation_id:
+            title = service.generate_title_from_message(request.query)
+            conversation_id = await service.create_conversation(
+                doctor_id=current_user.user_id,
+                patient_mrn=request.patient_mrn,
+                title=title
+            )
         
-        # Save new messages
+        # Save user query to conversation
         if conversation_id:
-            for msg in request.messages:
-                await service.add_message_to_conversation(
-                    conversation_id=conversation_id,
-                    role=msg.role,
-                    content=msg.content[0].text if msg.role == "user" else str(msg.content)
-                )
+            await service.add_message_to_conversation(
+                conversation_id=conversation_id,
+                role="user",
+                content=request.query
+            )
         
         # Create tools and config
         tools = create_tools_with_user_context(db, current_user, request.patient_mrn)
         config = {
-            "system": getattr(request, 'system', None),
             "tools": tools,
             "user_id": str(current_user.user_id),
             "patient_mrn": request.patient_mrn,

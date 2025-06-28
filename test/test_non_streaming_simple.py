@@ -183,17 +183,8 @@ class SimpleNonStreamingTester:
         
         # Same query as streaming version for comparison
         chat_data = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [{
-                        "type": "text", 
-                        "text": "Can you review Bob's recent medical records including any lab results and notes? Also search for current hypertension treatment guidelines."
-                    }]
-                }
-            ],
-            "patient_mrn": self.test_patient_mrn,
-            "system": "You are a medical AI assistant. Always check patient medical records first, then use web search for external guidelines if needed. Cite all sources with reference IDs."
+            "query": "Can you review Bob's recent medical records including any lab results and notes? Also search for current hypertension treatment guidelines.",
+            "patient_mrn": self.test_patient_mrn
         }
         
         print("📡 Sending non-streaming request...")
