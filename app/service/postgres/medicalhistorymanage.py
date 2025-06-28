@@ -13,8 +13,9 @@ async def create_new_medicalhistory(
     doctor_info: User
 ):
     try:
+        medicalhistory_id = str(ObjectId())
         medicalhistory = Medicalhistory(
-            medicalhistory_id=str(ObjectId()),
+            medicalhistory_id=medicalhistory_id,
             medicalhistory_date=medicalhistory_info.medicalhistory_date,
             medicalhistory_title=medicalhistory_info.medicalhistory_title,
             medicalhistory_content=medicalhistory_info.medicalhistory_content,
@@ -24,7 +25,7 @@ async def create_new_medicalhistory(
         )
         db.add(medicalhistory)
         await db.commit()
-        return {"success": True}
+        return {"success": True, "medicalhistory_id": medicalhistory_id}
     except Exception as e:
         await db.rollback()
         print(f"[create_new_medicalhistory error] {e}")

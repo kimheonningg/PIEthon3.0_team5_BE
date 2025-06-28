@@ -1,0 +1,35 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "document_schema",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the document."
+        },
+        "tests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "testName": {
+                "type": "string",
+                "description": "The name of the medical test."
+              },
+              "normalValues": {
+                "type": "string",
+                "description": "The normal value range for the test."
+              },
+              "unit": {
+                "type": "string",
+                "description": "The unit of measurement for the test."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

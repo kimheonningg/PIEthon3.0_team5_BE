@@ -5,6 +5,7 @@ from .notes import router as notes_router
 from .appointments import router as appointments_router
 from .examinations import router as examinations_router
 from .medicalhistories import router as medicalhistories_router
+from .labresults import router as labresults_router
 
 def init_routers(app_: FastAPI) -> None:
     router = APIRouter()
@@ -15,6 +16,7 @@ def init_routers(app_: FastAPI) -> None:
     router.include_router(appointments_router, prefix='/appointments', tags=["appointments"])
     router.include_router(examinations_router, prefix="/examinations", tags=['examinations'])
     router.include_router(medicalhistories_router, prefix="/medicalhistories", tags=['medicalhistories'])
+    router.include_router(labresults_router, prefix="/labresults", tags=['labresults'])
     
     app_.include_router(router)
     
