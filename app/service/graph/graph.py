@@ -10,6 +10,7 @@ from dataclasses import dataclass
 @dataclass
 class NodeDTO:
     """노드 데이터 전송 객체"""
+    id: str
     name: str
     datetime_obj: datetime
     content: str
@@ -17,6 +18,7 @@ class NodeDTO:
     def to_dict(self):
         """딕셔너리로 변환"""
         return {
+            "id": self.id,
             "name": self.name,
             "datetime": self.datetime_obj.isoformat(),
             "content": self.content
@@ -26,6 +28,7 @@ class NodeDTO:
     def from_dict(cls, data: dict):
         """딕셔너리에서 생성"""
         return cls(
+            id=data["id"],
             name=data["name"],
             datetime_obj=datetime.fromisoformat(data["datetime"]),
             content=data["content"]
@@ -50,17 +53,19 @@ class GraphDB:
 
     def create_node_from_dto(self, node_dto: NodeDTO):
         """DTO를 사용하여 노드 생성"""
-        self.create_node(node_dto.name, node_dto.datetime_obj, node_dto.content)
+        return self.create_node(node_dto.id, node_dto.name, node_dto.datetime_obj, node_dto.content)
 
-    def create_node(self, name, datetime_obj, content):
-        """새로운 노드 생성"""
+    def create_node(self, node_id, name, datetime_obj, content):
+        """새로운 노드 생성 (ID 입력받기)"""
         with self.driver.session() as session:
             session.run(
-                "CREATE (n:Node {name: $name, datetime: $datetime, content: $content})",
+                "CREATE (n:Node {id: $id, name: $name, datetime: $datetime, content: $content})",
+                id=node_id,
                 name=name,
                 datetime=datetime_obj.isoformat(),
                 content=content
             )
+        return node_id
 
     def read_all_nodes_as_dto(self) -> List[NodeDTO]:
         """모든 노드를 DTO 리스트로 조회"""
@@ -70,15 +75,16 @@ class GraphDB:
     def read_all_nodes(self):
         """모든 노드 조회"""
         with self.driver.session() as session:
-            result = session.run("MATCH (n:Node) RETURN n.name AS name, n.datetime AS datetime, n.content AS content")
+            result = session.run("MATCH (n:Node) RETURN n.id AS id, n.name AS name, n.datetime AS datetime, n.content AS content")
             return [{
+                "id": record["id"],
                 "name": record["name"], 
                 "datetime": record["datetime"], 
                 "content": record["content"]
             } for record in result]
 
     def update_node_content(self, name, new_content):
-        """노드 콘텐츠 업데이트"""
+        """노드 콘텐츠 업데이트 (이름으로)"""
         with self.driver.session() as session:
             session.run(
                 "MATCH (n:Node {name: $name}) SET n.content = $new_content",
@@ -86,10 +92,24 @@ class GraphDB:
                 new_content=new_content
             )
 
+    def update_node_content_by_id(self, node_id, new_content):
+        """노드 콘텐츠 업데이트 (ID로)"""
+        with self.driver.session() as session:
+            session.run(
+                "MATCH (n:Node {id: $id}) SET n.content = $new_content",
+                id=node_id,
+                new_content=new_content
+            )
+
     def delete_node(self, name):
-        """노드 삭제"""
+        """노드 삭제 (이름으로)"""
         with self.driver.session() as session:
             session.run("MATCH (n:Node {name: $name}) DETACH DELETE n", name=name)
+
+    def delete_node_by_id(self, node_id):
+        """노드 삭제 (ID로)"""
+        with self.driver.session() as session:
+            session.run("MATCH (n:Node {id: $id}) DETACH DELETE n", id=node_id)
 
     def create_edge(self, name1, name2, score, embedding1=None, embedding2=None):
         """두 노드 간 엣지 생성 (임베딩 정보 포함)"""
@@ -172,12 +192,30 @@ class GraphDB:
         """이름으로 노드 조회"""
         with self.driver.session() as session:
             result = session.run(
-                "MATCH (n:Node {name: $name}) RETURN n.name AS name, n.datetime AS datetime, n.content AS content",
+                "MATCH (n:Node {name: $name}) RETURN n.id AS id, n.name AS name, n.datetime AS datetime, n.content AS content",
                 name=name
             )
             record = result.single()
             if record:
                 return {
+                    "id": record["id"],
+                    "name": record["name"],
+                    "datetime": record["datetime"],
+                    "content": record["content"]
+                }
+            return None
+
+    def get_node_by_id(self, node_id):
+        """ID로 노드 조회"""
+        with self.driver.session() as session:
+            result = session.run(
+                "MATCH (n:Node {id: $id}) RETURN n.id AS id, n.name AS name, n.datetime AS datetime, n.content AS content",
+                id=node_id
+            )
+            record = result.single()
+            if record:
+                return {
+                    "id": record["id"],
                     "name": record["name"],
                     "datetime": record["datetime"],
                     "content": record["content"]
