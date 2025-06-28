@@ -1,6 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from config import get_settings
-from .schema import Base, User, Patient, Note, Appointment, Examination, Medicalhistory, LabResult, doctor_patient_association
+from .schema import (
+    Base, User, Patient, Note, Appointment, Examination, Medicalhistory, LabResult, 
+    Conversation, Message, Reference, MessageReference, doctor_patient_association
+)
 
 settings = get_settings()
 engine = create_async_engine(settings.database_url, echo=False)
