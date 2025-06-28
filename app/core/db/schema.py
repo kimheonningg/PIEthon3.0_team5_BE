@@ -1,3 +1,4 @@
+from sqlalchemy.dialects.postgresql import ARRAY 
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, DateTime, Text, Boolean, Integer, ForeignKey, Table, Column
 from datetime import datetime
@@ -36,6 +37,7 @@ class User(Base):
     notes: Mapped[List["Note"]] = relationship("Note", back_populates="doctor")
     appointments: Mapped[List["Appointment"]] = relationship("Appointment", back_populates="doctor")
     examinations: Mapped[List["Examination"]] = relationship("Examination", back_populates="doctor")
+    medicalhistories: Mapped[List["Medicalhistory"]] = relationship("Medicalhistory", back_populates="doctor")
 
 class Patient(Base):
     __tablename__ = 'patients'
@@ -58,6 +60,7 @@ class Patient(Base):
     notes: Mapped[List["Note"]] = relationship("Note", back_populates="patient")
     appointments: Mapped[List["Appointment"]] = relationship("Appointment", back_populates="patient")
     examinations: Mapped[List["Examination"]] = relationship("Examination", back_populates="patient")
+    medicalhistories: Mapped[List["Medicalhistory"]] = relationship("Medicalhistory", back_populates="patient")
 
 class Note(Base):
     __tablename__ = 'notes'
@@ -108,3 +111,20 @@ class Examination(Base):
     # Relationships
     patient: Mapped["Patient"] = relationship("Patient", back_populates="examinations")
     doctor: Mapped["User"] = relationship("User", back_populates="examinations")
+
+class Medicalhistory(Base):
+    __tablename__ = 'medicalhistories'
+
+    medicalhistory_id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    medicalhistory_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    medicalhistory_title = mapped_column(Text, nullable=False)
+    medicalhistory_content = mapped_column(Text, nullable=False)
+    tags: Mapped[List[str]] = mapped_column(ARRAY(String(30)), nullable=True)
+
+     # Foreign keys
+    patient_mrn: Mapped[str] = mapped_column(String(50), ForeignKey('patients.patient_mrn'), nullable=False)
+    doctor_id: Mapped[str] = mapped_column(String(50), ForeignKey('users.user_id'), nullable=False)
+
+    # Relationships
+    patient: Mapped["Patient"] = relationship("Patient", back_populates="medicalhistories")
+    doctor: Mapped["User"] = relationship("User", back_populates="medicalhistories")
