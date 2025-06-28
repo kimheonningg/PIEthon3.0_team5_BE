@@ -63,6 +63,7 @@ class Patient(Base):
     appointments: Mapped[List["Appointment"]] = relationship("Appointment", back_populates="patient")
     examinations: Mapped[List["Examination"]] = relationship("Examination", back_populates="patient")
     medicalhistories: Mapped[List["Medicalhistory"]] = relationship("Medicalhistory", back_populates="patient")
+    lab_results: Mapped[List["LabResult"]] = relationship("LabResult", back_populates="patient")
 
 class Note(Base):
     __tablename__ = 'notes'
@@ -130,3 +131,21 @@ class Medicalhistory(Base):
     # Relationships
     patient: Mapped["Patient"] = relationship("Patient", back_populates="medicalhistories")
     doctor: Mapped["User"] = relationship("User", back_populates="medicalhistories")
+    lab_results: Mapped[List["LabResult"]] = relationship("LabResult", back_populates="medicalhistory")
+
+class LabResult(Base):
+    __tablename__ = 'lab_result'
+
+    lab_result_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    test_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    normal_values: Mapped[str] = mapped_column(String(100), nullable=False)
+    unit: Mapped[str] = mapped_column(String(30), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Foreign keys
+    medicalhistory_id: Mapped[str] = mapped_column(String(50), ForeignKey('medicalhistories.medicalhistory_id'), nullable=True)
+    patient_mrn: Mapped[str] = mapped_column(String(50), ForeignKey('patients.patient_mrn'), nullable=True)
+
+    # Relationships
+    medicalhistory: Mapped["Medicalhistory"] = relationship("Medicalhistory", back_populates="lab_results")
+    patient: Mapped["Patient"] = relationship("Patient", back_populates="lab_results")

@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from config import get_settings
-from .schema import Base, User, Patient, Note, Appointment, Examination, Medicalhistory, doctor_patient_association
+from .schema import Base, User, Patient, Note, Appointment, Examination, Medicalhistory, LabResult, doctor_patient_association
 
 settings = get_settings()
 engine = create_async_engine(settings.database_url, echo=False)
@@ -31,7 +31,8 @@ __all__ = [
     'Assignment', 
     'Examination', 
     'Medicalhistory', 
-    'doctor_patient_association', 
+    'LabResult',
+    'doctor_patient_association',
     'Base', 
     'engine', 
     'AsyncSessionLocal'
