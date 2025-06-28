@@ -140,7 +140,7 @@ class LabResult(Base):
     test_name: Mapped[str] = mapped_column(String(100), nullable=False)
     normal_values: Mapped[str] = mapped_column(String(100), nullable=False)
     unit: Mapped[str] = mapped_column(String(30), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    lab_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Foreign keys
     medicalhistory_id: Mapped[str] = mapped_column(String(50), ForeignKey('medicalhistories.medicalhistory_id'), nullable=True)
