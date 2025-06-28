@@ -138,10 +138,20 @@ PIEthon3.0_team5_BE/
 ### Appointments
 
 - `appointment_id` (Primary Key): Appointment's unique identifier
-- `patient_mrn`: (Foreign Key): Tells which patient has an appointment scheduled
-- `doctor_id`: (Foreign Key): Tells which doctor is seeing the patient
+- `patient_mrn` (Foreign Key): Tells which patient has an appointment scheduled
+- `doctor_id` (Foreign Key): Tells which doctor is seeing the patient
 - `appointment_detail`: Specific info about the appointment
 - `start_time`, `finish_time`: Tells when the appointment is scheduled
+
+### Examinations
+
+This is for the 'Recent Examinations' widget
+
+- `examination_id` (Primary Key): Examination's unique identifier
+- `patient_mrn` (Foreign Key): patient assigned
+- `doctor_id` (Foreign Key): doctor that made this examination
+- `examination_title`
+- `examination_date`
 
 ## Key Features
 

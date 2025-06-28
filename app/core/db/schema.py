@@ -35,6 +35,7 @@ class User(Base):
     )
     notes: Mapped[List["Note"]] = relationship("Note", back_populates="doctor")
     appointments: Mapped[List["Appointment"]] = relationship("Appointment", back_populates="doctor")
+    examinations: Mapped[List["Examination"]] = relationship("Examination", back_populates="doctor")
 
 class Patient(Base):
     __tablename__ = 'patients'
@@ -56,6 +57,7 @@ class Patient(Base):
     )
     notes: Mapped[List["Note"]] = relationship("Note", back_populates="patient")
     appointments: Mapped[List["Appointment"]] = relationship("Appointment", back_populates="patient")
+    examinations: Mapped[List["Examination"]] = relationship("Examination", back_populates="patient")
 
 class Note(Base):
     __tablename__ = 'notes'
@@ -91,3 +93,18 @@ class Appointment(Base):
     # Relationships
     patient: Mapped["Patient"] = relationship("Patient", back_populates="appointments")
     doctor: Mapped["User"] = relationship("User", back_populates="appointments")
+
+class Examination(Base):
+    __tablename__ = 'examinations'
+
+    examination_id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    examination_title: Mapped[str] = mapped_column(Text, nullable=False)
+    examination_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+   
+    # Foreign keys
+    patient_mrn: Mapped[str] = mapped_column(String(50), ForeignKey('patients.patient_mrn'), nullable=False)
+    doctor_id: Mapped[str] = mapped_column(String(50), ForeignKey('users.user_id'), nullable=False)
+
+    # Relationships
+    patient: Mapped["Patient"] = relationship("Patient", back_populates="examinations")
+    doctor: Mapped["User"] = relationship("User", back_populates="examinations")
