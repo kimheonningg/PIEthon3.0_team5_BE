@@ -3,3 +3,7 @@ __pycache__/
 venv
 pg-volume
 output/chat
+
+Piethon_test/
+ai/*.pkl
+ai/BrainMRI/brainMRI_model_weights.pkl

@@ -437,16 +437,19 @@ def create_tools_with_user_context(db, user, patient_mrn: Optional[str] = None) 
     
     @tool(description="Get general information or statistics that don't require user context.")
     async def get_general_info_with_context(
-        info_type: str = Field(..., description="Type of information to retrieve"),
-        limit: int = Field(10, description="Maximum number of results to return")
+        info_type: str = Field(description="Type of information to retrieve"),
+        limit: int = Field(default=10, description="Maximum number of results to return")
     ) -> Dict[str, Any]:
+        # Set defaults if not provided
+        if limit is None:
+            limit = 10
         return await get_general_info(info_type, limit, db)
     
     # Medical record tools with context
     @tool(description="Get recent medical notes for the patient. Use this to find clinical notes, consultation records, treatment notes, and other documented observations.")
     async def get_recent_notes_with_context(
-        limit: int = Field(5, description="Maximum number of recent notes to return (default 5)"),
-        note_type: Optional[str] = Field(None, description="Filter by note type: 'consult', 'treatment', 'radiology', 'other'")
+        limit: int = Field(default=5, description="Maximum number of recent notes to return (default 5)"),
+        note_type: Optional[str] = Field(default=None, description="Filter by note type: 'consult', 'treatment', 'radiology', 'other'")
     ) -> Dict[str, Any]:
         if not db:
             return {"error": "Database connection not available"}
@@ -495,8 +498,8 @@ def create_tools_with_user_context(db, user, patient_mrn: Optional[str] = None) 
     
     @tool(description="Get recent appointments for the patient. Use this to find scheduled visits, appointment details, and visit history.")
     async def get_recent_appointments_with_context(
-        limit: int = Field(5, description="Maximum number of recent appointments to return (default 5)"),
-        future_only: bool = Field(False, description="If True, only return future appointments; if False, return recent past and future")
+        limit: int = Field(default=5, description="Maximum number of recent appointments to return (default 5)"),
+        future_only: bool = Field(default=False, description="If True, only return future appointments; if False, return recent past and future")
     ) -> Dict[str, Any]:
         if not db:
             return {"error": "Database connection not available"}
@@ -504,7 +507,7 @@ def create_tools_with_user_context(db, user, patient_mrn: Optional[str] = None) 
         try:
             from app.core.db.schema import Appointment
             from sqlalchemy import select, desc
-            from datetime import datetime, timezone
+            from datetime import datetime
             
             # Build query for patient's appointments
             query = select(Appointment).where(
@@ -512,7 +515,7 @@ def create_tools_with_user_context(db, user, patient_mrn: Optional[str] = None) 
             )
             
             if future_only:
-                now = datetime.now(timezone.utc)
+                now = datetime.now()  # Use naive datetime to match database
                 query = query.where(Appointment.start_time >= now).order_by(Appointment.start_time)
             else:
                 query = query.order_by(desc(Appointment.start_time))
@@ -525,7 +528,7 @@ def create_tools_with_user_context(db, user, patient_mrn: Optional[str] = None) 
             # Format appointments with reference IDs
             formatted_appointments = []
             for appointment in appointments:
-                now = datetime.now(timezone.utc)
+                now = datetime.now()  # Use naive datetime to match database
                 reference_id = f"appointments_{appointment.appointment_id}"
                 formatted_appointments.append({
                     "reference_id": reference_id,
@@ -549,8 +552,8 @@ def create_tools_with_user_context(db, user, patient_mrn: Optional[str] = None) 
     
     @tool(description="Get recent medical history entries for the patient. Use this to find past medical conditions, treatments, surgeries, and historical health information.")
     async def get_recent_medical_histories_with_context(
-        limit: int = Field(5, description="Maximum number of recent medical history entries to return (default 5)"),
-        tag_filter: Optional[str] = Field(None, description="Filter by tag (e.g., 'diabetes', 'surgery', 'allergy')")
+        limit: int = Field(default=5, description="Maximum number of recent medical history entries to return (default 5)"),
+        tag_filter: Optional[str] = Field(default=None, description="Filter by tag (e.g., 'diabetes', 'surgery', 'allergy')")
     ) -> Dict[str, Any]:
         if not db:
             return {"error": "Database connection not available"}
@@ -598,7 +601,7 @@ def create_tools_with_user_context(db, user, patient_mrn: Optional[str] = None) 
     
     @tool(description="Get recent examinations for the patient. Use this to find imaging studies, diagnostic tests, physical examinations, and clinical assessments.")
     async def get_recent_examinations_with_context(
-        limit: int = Field(5, description="Maximum number of recent examinations to return (default 5)")
+        limit: int = Field(default=5, description="Maximum number of recent examinations to return (default 5)")
     ) -> Dict[str, Any]:
         if not db:
             return {"error": "Database connection not available"}
@@ -638,8 +641,8 @@ def create_tools_with_user_context(db, user, patient_mrn: Optional[str] = None) 
     
     @tool(description="Get recent lab results for the patient. Use this to find blood tests, lab values, diagnostic markers, and test results with normal ranges.")
     async def get_recent_lab_results_with_context(
-        limit: int = Field(10, description="Maximum number of recent lab results to return (default 10)"),
-        test_name_filter: Optional[str] = Field(None, description="Filter by test name (e.g., 'glucose', 'hemoglobin', 'cholesterol')")
+        limit: int = Field(default=10, description="Maximum number of recent lab results to return (default 10)"),
+        test_name_filter: Optional[str] = Field(default=None, description="Filter by test name (e.g., 'glucose', 'hemoglobin', 'cholesterol')")
     ) -> Dict[str, Any]:
         if not db:
             return {"error": "Database connection not available"}
