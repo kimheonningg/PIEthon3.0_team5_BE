@@ -43,7 +43,7 @@ async def parse_lab_image_and_create(
         # 1. Medicalhistory 생성
         medicalhistory_info = MedicalhistoryModel(
             medicalhistory_title="Lab History",
-            medicalhistory_content=json.dumps(parsed_data, ensure_ascii=False, indent=2),
+            medicalhistory_content=parsed_data.get("title", ""),
             medicalhistory_date=lab_datetime,
             patient_mrn=patient_mrn,
             tags=["lab", "parsed"]
