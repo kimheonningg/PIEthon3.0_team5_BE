@@ -12,6 +12,7 @@ async def create_new_lab_result(
     try:
         lab_result = LabResult(
             test_name=lab_result_info.test_name,
+            result_value=lab_result_info.result_value,
             normal_values=lab_result_info.normal_values,
             unit=lab_result_info.unit,
             lab_date=lab_result_info.lab_date,
@@ -39,6 +40,7 @@ async def get_lab_results_by_patient(
             {
                 "lab_result_id": lr.lab_result_id,
                 "test_name": lr.test_name,
+                "result_value": lr.result_value,
                 "normal_values": lr.normal_values,
                 "unit": lr.unit,
                 "lab_date": lr.lab_date,

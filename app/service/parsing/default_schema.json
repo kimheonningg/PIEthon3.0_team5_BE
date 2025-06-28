@@ -18,6 +18,10 @@
                 "type": "string",
                 "description": "The name of the medical test."
               },
+              "resultValue": {
+                "type": "string",
+                "description": "The name of the medical test."
+              },
               "normalValues": {
                 "type": "string",
                 "description": "The normal value range for the test."

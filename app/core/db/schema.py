@@ -138,6 +138,7 @@ class LabResult(Base):
 
     lab_result_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     test_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    result_value: Mapped[str] = mapped_column(String(100), nullable=False)
     normal_values: Mapped[str] = mapped_column(String(100), nullable=False)
     unit: Mapped[str] = mapped_column(String(30), nullable=False)
     lab_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

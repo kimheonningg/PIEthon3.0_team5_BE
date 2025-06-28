@@ -70,6 +70,7 @@ async def parse_lab_image_and_create(
         for test in tests:
             lab_result_info = LabResultModel(
                 test_name=test.get("testName", ""),
+                result_value=test.get("resultValue", ""),
                 normal_values=test.get("normalValues", ""),
                 unit=test.get("unit", ""),
                 lab_date=lab_datetime,
@@ -81,6 +82,7 @@ async def parse_lab_image_and_create(
             if result.get("success"):
                 created_lab_results.append({
                     "test_name": test.get("testName"),
+                    "result_value": test.get("resultValue"),
                     "normal_values": test.get("normalValues"),
                     "unit": test.get("unit")
                 })
