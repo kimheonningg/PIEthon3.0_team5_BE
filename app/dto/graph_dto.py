@@ -40,20 +40,15 @@ class EdgeResponse(BaseModel):
     embedding2_dim: Optional[int] = None
 
 
-class BuildEdgesRequest(BaseModel):
-    """엣지 생성 요청"""
-    working_set: List[str]
-
-
 class CenterEdgesRequest(BaseModel):
     """중심 노드 기준 엣지 생성 요청"""
-    center_node_name: str
+    center_node_id: str
 
 
 class SimilarityRequest(BaseModel):
     """유사도 계산 요청"""
-    node1_name: str
-    node2_name: str
+    node1_id: str
+    node2_id: str
 
 
 class SimilarityResponse(BaseModel):

@@ -83,14 +83,7 @@ class GraphDB:
                 "content": record["content"]
             } for record in result]
 
-    def update_node_content(self, name, new_content):
-        """노드 콘텐츠 업데이트 (이름으로)"""
-        with self.driver.session() as session:
-            session.run(
-                "MATCH (n:Node {name: $name}) SET n.content = $new_content",
-                name=name,
-                new_content=new_content
-            )
+
 
     def update_node_content_by_id(self, node_id, new_content):
         """노드 콘텐츠 업데이트 (ID로)"""
@@ -101,10 +94,7 @@ class GraphDB:
                 new_content=new_content
             )
 
-    def delete_node(self, name):
-        """노드 삭제 (이름으로)"""
-        with self.driver.session() as session:
-            session.run("MATCH (n:Node {name: $name}) DETACH DELETE n", name=name)
+
 
     def delete_node_by_id(self, node_id):
         """노드 삭제 (ID로)"""
@@ -124,7 +114,7 @@ class GraphDB:
                 edge_properties["embedding2"] = embedding2
                 
             session.run("""
-                MATCH (a:Node {name: $name1}), (b:Node {name: $name2})
+                MATCH (a:Node {id: $name1}), (b:Node {id: $name2})
                 MERGE (a)-[r:HAS_RELATION]->(b)
                 SET r += $properties
             """, name1=name1, name2=name2, properties=edge_properties)
@@ -188,22 +178,7 @@ class GraphDB:
             # 오류 발생 시 기본값 반환
             return 0.0, None, None
 
-    def get_node_by_name(self, name):
-        """이름으로 노드 조회"""
-        with self.driver.session() as session:
-            result = session.run(
-                "MATCH (n:Node {name: $name}) RETURN n.id AS id, n.name AS name, n.datetime AS datetime, n.content AS content",
-                name=name
-            )
-            record = result.single()
-            if record:
-                return {
-                    "id": record["id"],
-                    "name": record["name"],
-                    "datetime": record["datetime"],
-                    "content": record["content"]
-                }
-            return None
+
 
     def get_node_by_id(self, node_id):
         """ID로 노드 조회"""
@@ -237,7 +212,8 @@ class GraphDB:
         
         # 첫 번째 노드 고정
         first_node_name = working_set[0]
-        first_node = self.get_node_by_name(first_node_name)
+        first_node = self.get_node_by_id(first_node_name)
+        print(f"첫 번째 노드: {first_node_name}")
         
         if first_node is None:
             print(f"첫 번째 노드를 찾을 수 없습니다: {first_node_name}")
@@ -246,7 +222,7 @@ class GraphDB:
         # 나머지 모든 노드들과 비교
         for i in range(1, len(working_set)):
             second_node_name = working_set[i]
-            second_node = self.get_node_by_name(second_node_name)
+            second_node = self.get_node_by_id(second_node_name)
             
             if second_node is None:
                 print(f"노드를 찾을 수 없습니다: {second_node_name}")
@@ -321,7 +297,7 @@ class GraphDB:
             # HAS_RELATION 엣지 조회
             result = session.run("""
                 MATCH (a:Node)-[r:HAS_RELATION]->(b:Node) 
-                RETURN a.name AS from_node, b.name AS to_node, r.score AS score,
+                RETURN a.id AS from_node, b.id AS to_node, r.score AS score,
                        r.embedding1 AS embedding1, r.embedding2 AS embedding2, 'HAS_RELATION' AS rel_type
             """)
             
@@ -345,7 +321,7 @@ class GraphDB:
             result = session.run("""
                 MATCH (a:Node)-[r:IS_SAMEDATE]-(b:Node) 
                 WHERE ID(a) < ID(b)
-                RETURN a.name AS from_node, b.name AS to_node, 'IS_SAMEDATE' AS rel_type
+                RETURN a.id AS from_node, b.id AS to_node, 'IS_SAMEDATE' AS rel_type
             """)
             
             for record in result:
@@ -359,31 +335,34 @@ class GraphDB:
             
             return edges
 
-    def build_samedate_with_center(self, center_node_name):
+
+
+    def build_samedate_with_center_by_id(self, center_node_id):
         """
         중심 노드와 HAS_RELATION으로 연결된 모든 노드에 대해
-        같은 날짜면 IS_SAMEDATE 엣지를 추가
+        같은 날짜면 IS_SAMEDATE 엣지를 추가 (ID 기반)
         """
-        print(f"\n=== 중심 노드({center_node_name}) 기준 IS_SAMEDATE 엣지 추가 ===")
+        print(f"\n=== 중심 노드(ID: {center_node_id}) 기준 IS_SAMEDATE 엣지 추가 ===")
         with self.driver.session() as session:
             # 중심 노드의 날짜 조회
             result = session.run(
-                "MATCH (n:Node {name: $center}) RETURN n.datetime AS datetime",
-                center=center_node_name
+                "MATCH (n:Node {id: $center}) RETURN n.datetime AS datetime, n.name AS name",
+                center=center_node_id
             )
             record = result.single()
             if not record or not record["datetime"]:
                 print("중심 노드의 날짜 정보를 찾을 수 없습니다.")
                 return
             center_date = record["datetime"].split('T')[0]
+            center_name = record["name"]
 
             # HAS_RELATION으로 연결된 모든 노드 조회
             result = session.run(
                 """
-                MATCH (a:Node {name: $center})-[r:HAS_RELATION]->(b:Node)
+                MATCH (a:Node {id: $center})-[r:HAS_RELATION]->(b:Node)
                 RETURN b.name AS name, b.datetime AS datetime
                 """,
-                center=center_node_name
+                center=center_node_id
             )
             for rec in result:
                 other_name = rec["name"]
@@ -392,8 +371,6 @@ class GraphDB:
                     continue
                 other_date = other_datetime.split('T')[0]
                 if other_date == center_date:
-                    self.create_samedate_edge(center_node_name, other_name)
-                    print(f"  ✓ IS_SAMEDATE 엣지: {center_node_name} <-> {other_name}")
+                    self.create_samedate_edge(center_name, other_name)
+                    print(f"  ✓ IS_SAMEDATE 엣지: {center_name} <-> {other_name}")
         print("중심 노드 기준 IS_SAMEDATE 엣지 추가 완료")
-
-

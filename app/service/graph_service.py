@@ -31,25 +31,13 @@ class GraphService:
         """모든 노드를 DTO로 조회"""
         return self.graph_db.read_all_nodes_as_dto()
     
-    def get_node_by_name(self, name: str) -> Optional[dict]:
-        """이름으로 노드 조회"""
-        return self.graph_db.get_node_by_name(name)
-    
     def get_node_by_id(self, node_id: str) -> Optional[dict]:
         """ID로 노드 조회"""
         return self.graph_db.get_node_by_id(node_id)
     
-    def update_node_content(self, name: str, new_content: str):
-        """노드 내용 업데이트 (이름으로)"""
-        return self.graph_db.update_node_content(name, new_content)
-    
     def update_node_content_by_id(self, node_id: str, new_content: str):
         """노드 내용 업데이트 (ID로)"""
         return self.graph_db.update_node_content_by_id(node_id, new_content)
-    
-    def delete_node(self, name: str):
-        """노드 삭제 (이름으로)"""
-        return self.graph_db.delete_node(name)
     
     def delete_node_by_id(self, node_id: str):
         """노드 삭제 (ID로)"""
@@ -68,15 +56,15 @@ class GraphService:
         """같은 날짜 엣지 생성"""
         return self.graph_db.build_samedate_edges()
     
-    def build_center_same_date_edges(self, center_node_name: str):
-        """중심 노드 기준 같은 날짜 엣지 생성"""
-        return self.graph_db.build_samedate_with_center(center_node_name)
+    def build_center_same_date_edges_by_id(self, center_node_id: str):
+        """중심 노드 기준 같은 날짜 엣지 생성 (ID로)"""
+        return self.graph_db.build_samedate_with_center_by_id(center_node_id)
     
     # 임베딩 관련
-    def calculate_similarity(self, node1_name: str, node2_name: str) -> float:
-        """두 노드간 유사도 계산"""
-        node1 = self.get_node_by_name(node1_name)
-        node2 = self.get_node_by_name(node2_name)
+    def calculate_similarity_by_id(self, node1_id: str, node2_id: str) -> float:
+        """두 노드간 유사도 계산 (ID로)"""
+        node1 = self.get_node_by_id(node1_id)
+        node2 = self.get_node_by_id(node2_id)
         
         if not node1 or not node2:
             return 0.0
