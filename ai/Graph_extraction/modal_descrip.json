@@ -1,0 +1,28 @@
+{
+    "Chest X-ray": {
+      "clinical": "PA/LAT chest to r/o PNA, PTX, pleural eff., or cardiomegaly.",
+      "formal": "Basic imaging to detect lung disease, pleural effusion, pneumothorax, or cardiomegaly.",
+      "related_conditions": ["pneumonia", "pneumothorax", "pleural effusion", "cardiomegaly", "CHF", "TB", "lung mass"]
+    },
+    "Chest CT": {
+      "clinical": "CT chest (w/ or w/o contrast) to eval lung mass, PE, ILD, or mediastinal LAD.",
+      "formal": "Cross-sectional imaging of lungs and mediastinum; used for PE, cancer, and interstitial disease.",
+      "related_conditions": ["lung cancer", "pulmonary embolism", "interstitial lung disease", "sarcoidosis", "emphysema", "fibrosis"]
+    },
+    "Brain CT": {
+      "clinical": "Non-con HCT to r/o ICH, infarct, skull fx, or mass effect.",
+      "formal": "Fast brain scan for hemorrhage, stroke, fracture, or mass effect in emergency settings.",
+      "related_conditions": ["intracerebral hemorrhage", "ischemic stroke", "trauma", "subdural hematoma", "subarachnoid hemorrhage"]
+    },
+    "Brain MRI": {
+      "clinical": "Brain MRI w/ and w/o gad for tumor workup, DWI/FLAIR for stroke, demyelination, or seizure eval.",
+      "formal": "High-resolution brain imaging for tumor, stroke, epilepsy, or demyelinating disease.",
+      "related_conditions": ["brain tumor", "glioma", "stroke", "multiple sclerosis", "epilepsy", "encephalitis"]
+    },
+    "Spine MRI": {
+      "clinical": "MRI C/L/T/S spine for HNP, spinal stenosis, cord compression, or s/p trauma.",
+      "formal": "Imaging of spine for disc herniation, spinal stenosis, or cord compression.",
+      "related_conditions": ["herniated disc", "spinal stenosis", "spinal tumor", "cord compression", "vertebral fracture"]
+    }
+  }
+  
