@@ -7,7 +7,7 @@ from app.dto.graph_dto import (
     ThresholdRequest, ThresholdResponse, GraphStatsResponse
 )
 from app.service.graph_service import get_graph_service, GraphService
-from app.service.postgres.medicalhistorymanage import get_all_medicalhistories
+# from app.service.postgres.medicalhistorymanage import get_all_medicalhistories
 from app.core.db import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 
