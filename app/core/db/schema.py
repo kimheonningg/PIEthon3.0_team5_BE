@@ -1,9 +1,47 @@
 from sqlalchemy.dialects.postgresql import ARRAY, JSON
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, DateTime, Text, Boolean, Integer, ForeignKey, Table, Column, Enum
+from sqlalchemy import String, DateTime, Text, Boolean, Integer, ForeignKey, Table, Column, Enum, DECIMAL
 from datetime import datetime
 from typing import Optional, List
 import enum
+
+class ModalityType(enum.Enum):
+    XRAY = "x-ray"
+    MRI = "mri"
+
+class BodyPartType(enum.Enum):
+    CHEST = "chest"
+    BRAIN = "brain"
+
+class SequenceType(enum.Enum):
+    # MRI sequences
+    T1 = "t1"
+    T1CE = "t1ce"  # T1 with contrast enhancement
+    T2 = "t2"
+    FLAIR = "flair"
+    DWI = "dwi"
+    SEGMENTATION = "seg"  # Ground truth masks
+    # X-ray (can be expanded)
+    PA = "pa"  # Posterior-anterior
+    LATERAL = "lateral"
+    AP = "ap"  # Anterior-posterior
+
+class DiseaseClassType(enum.Enum):
+    AORTIC_ENLARGEMENT = "Aortic enlargement"
+    ATELECTASIS = "Atelectasis"
+    CALCIFICATION = "Calcification"
+    CARDIOMEGALY = "Cardiomegaly"
+    CONSOLIDATION = "Consolidation"
+    ILD = "ILD"
+    INFILTRATION = "Infiltration"
+    LUNG_OPACITY = "Lung Opacity"
+    NODULE_MASS = "Nodule/Mass"
+    OTHER_LESION = "Other lesion"
+    PLEURAL_EFFUSION = "Pleural effusion"
+    PLEURAL_THICKENING = "Pleural thickening"
+    PNEUMOTHORAX = "Pneumothorax"
+    PULMONARY_FIBROSIS = "Pulmonary fibrosis"
+    BRAIN_TUMOUR = "brain_tumour"
 
 class ReferenceType(enum.Enum):
     """Reference types for citations."""
@@ -63,7 +101,7 @@ class Patient(Base):
     birthdate: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     body_part: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     ai_ready: Mapped[bool] = mapped_column(Boolean, default=True)
-    gender: Mapped[bool] = mapped_column(String(20), nullable=False) # only allow female / male
+    gender: Mapped[str] = mapped_column(String(20), nullable=False)
 
     # Relationships
     doctors: Mapped[List["User"]] = relationship(
@@ -77,7 +115,7 @@ class Patient(Base):
     medicalhistories: Mapped[List["Medicalhistory"]] = relationship("Medicalhistory", back_populates="patient")
     lab_results: Mapped[List["LabResult"]] = relationship("LabResult", back_populates="patient")
     conversations: Mapped[List["Conversation"]] = relationship("Conversation", back_populates="patient")
-
+    imaging_subjects: Mapped[List["ImagingSubject"]] = relationship("ImagingSubject", back_populates="patient")
 class Note(Base):
     __tablename__ = 'notes'
     
@@ -219,3 +257,51 @@ class MessageReference(Base):
     # Relationships
     message: Mapped["Message"] = relationship("Message", back_populates="references")
     reference: Mapped["Reference"] = relationship("Reference", back_populates="message_references")
+
+class ImagingSubject(Base):
+    __tablename__ = 'imaging_subjects'
+    
+    subject_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)  # UNIQUE DB ID
+    subject_name: Mapped[str] = mapped_column(String(100), nullable=False)  # "BraTS2021_00621"
+    patient_mrn: Mapped[str] = mapped_column(String(50), ForeignKey('patients.patient_mrn'), nullable=False)
+    modality: Mapped[ModalityType] = mapped_column(Enum(ModalityType), nullable=False)
+    body_part: Mapped[BodyPartType] = mapped_column(Enum(BodyPartType), nullable=False)
+    study_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    study_description: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    patient: Mapped["Patient"] = relationship("Patient", back_populates="imaging_subjects")
+    series: Mapped[List["ImagingSeries"]] = relationship("ImagingSeries", back_populates="subject")
+
+class ImagingSeries(Base):
+    __tablename__ = 'imaging_series'
+    
+    series_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)  # UNIQUE
+    subject_id: Mapped[int] = mapped_column(Integer, ForeignKey('imaging_subjects.subject_id'), nullable=False)
+    sequence_type: Mapped[SequenceType] = mapped_column(Enum(SequenceType), nullable=False)  # NEW!
+    file_uri: Mapped[str] = mapped_column(String(500), nullable=False)
+    slices_dir: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    slice_idx: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    image_resolution: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    series_description: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)  # NEW!
+    acquisition_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)  # NEW!
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    subject: Mapped["ImagingSubject"] = relationship("ImagingSubject", back_populates="series")
+    diseases: Mapped[List["Disease"]] = relationship("Disease", back_populates="series")
+
+class Disease(Base):
+    __tablename__ = 'diseases'
+    
+    disease_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)  # UNIQUE
+    series_id: Mapped[int] = mapped_column(Integer, ForeignKey('imaging_series.series_id'), nullable=False)
+    bounding_box: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)  # {"x1": 45, "y1": 67, "x2": 120, "y2": 145, "z1": 78, "z2": 102}
+    disease: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    confidence_score: Mapped[Optional[float]] = mapped_column(DECIMAL(4,3), nullable=True)  # 0.000 to 1.000
+    class_name: Mapped[Optional[DiseaseClassType]] = mapped_column(Enum(DiseaseClassType), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    series: Mapped["ImagingSeries"] = relationship("ImagingSeries", back_populates="diseases")
