@@ -9,6 +9,7 @@ from .labresults import router as labresults_router
 from .agent import router as agent_router
 from .references import router as references_router
 from .graph import router as graph_router
+from .imaging import router as imaging_router
 
 def init_routers(app_: FastAPI) -> None:
     router = APIRouter()
@@ -23,6 +24,7 @@ def init_routers(app_: FastAPI) -> None:
     router.include_router(agent_router, prefix="/agent", tags=["agent"])
     router.include_router(references_router, prefix="/references", tags=["references"])
     router.include_router(graph_router, prefix="/graph", tags=["graph"])
+    router.include_router(imaging_router, prefix="/imaging", tags=["imaging"])
     
     app_.include_router(router)
     
