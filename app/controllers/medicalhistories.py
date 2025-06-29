@@ -5,7 +5,8 @@ from app.dto.medicalhistory import Medicalhistory as MedicalhistoryModel
 from app.service.postgres.medicalhistorymanage import (
     create_new_medicalhistory,
     get_medications,
-    get_procedures
+    get_procedures,
+    get_an_medicalhistory_by_id
 )
 from app.core.db import get_db, Medicalhistory, User
 from app.core.auth import get_current_user
@@ -42,5 +43,16 @@ async def get_procedures_medicalhistory(
 ):
     success = await get_procedures(
         patient_mrn, db, current_user
+    )
+    return success
+
+@router.get('/by/id/{medicalhistory_id}') # get a specific medicalhistory with id
+async def get_an_medicalhistory(
+    medicalhistory_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    success = await get_an_medicalhistory_by_id(
+        medicalhistory_id, db, current_user
     )
     return success

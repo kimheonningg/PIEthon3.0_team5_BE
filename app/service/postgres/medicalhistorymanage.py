@@ -104,3 +104,44 @@ async def get_procedures(
     except Exception as e:
         print(f"[get_procedures error] {e}")
         return {"success": False, "error": str(e)}
+
+async def get_an_medicalhistory_by_id(
+    medicalhistory_id: str,
+    db: AsyncSession,
+    doctor_info: User
+):
+    try:
+        result = await db.execute(
+            select(Medicalhistory)
+            .options(selectinload(Medicalhistory.patient))
+            .where(
+                Medicalhistory.medicalhistory_id == medicalhistory_id,
+                Medicalhistory.doctor_id == doctor_info.user_id
+            )
+        )
+        mh = result.scalars().first()
+
+        if not mh:
+            return {"success": False, "error": "Medical history not found or unauthorized"}
+
+        return {
+            "success": True,
+            "medicalhistory": {
+                "medicalhistory_id": mh.medicalhistory_id,
+                "medicalhistory_title": mh.medicalhistory_title,
+                "medicalhistory_content": mh.medicalhistory_content,
+                "medicalhistory_date": mh.medicalhistory_date.isoformat(),
+                "tags": mh.tags,
+                "patient": {
+                    "patient_mrn": mh.patient.patient_mrn,
+                    "first_name": mh.patient.first_name,
+                    "last_name": mh.patient.last_name,
+                    "age": mh.patient.age,
+                    "phone_num": mh.patient.phone_num,
+                }
+            }
+        }
+
+    except Exception as e:
+        print(f"[get_an_medicalhistory_by_id error] {e}")
+        return {"success": False, "error": str(e)}

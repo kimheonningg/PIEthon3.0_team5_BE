@@ -95,3 +95,43 @@ async def get_specific_appointment(
     except Exception as e:
         print(f"[get_specific_appointment error] {e}")
         return {"success": False, "error": str(e)}
+
+async def get_an_appointment_by_id(
+    appointment_id: str,
+    doctor_info: User,
+    db: AsyncSession
+):
+    try:
+        result = await db.execute(
+            select(Appointment)
+            .options(selectinload(Appointment.patient))
+            .where(
+                Appointment.appointment_id == appointment_id,
+                Appointment.doctor_id == doctor_info.user_id
+            )
+        )
+        appt = result.scalars().first()
+
+        if not appt:
+            return {"success": False, "error": "Appointment not found"}
+
+        return {
+            "success": True,
+            "appointment": {
+                "appointment_id": appt.appointment_id,
+                "appointment_detail": appt.appointment_detail,
+                "start_time": appt.start_time.isoformat(),
+                "finish_time": appt.finish_time.isoformat(),
+                "patient": {
+                    "patient_mrn": appt.patient.patient_mrn,
+                    "first_name": appt.patient.first_name,
+                    "last_name": appt.patient.last_name,
+                    "age": appt.patient.age,
+                    "phone_num": appt.patient.phone_num,
+                }
+            }
+        }
+
+    except Exception as e:
+        print(f"[get_an_appointment_by_id error] {e}")
+        return {"success": False, "error": str(e)}
